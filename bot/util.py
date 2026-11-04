@@ -167,7 +167,17 @@ class Blob:
 
     def __init__(self, token: str, store: str | None = None):
         self.token = token
-        self.store = store or os.environ.get("BLOB_STORE_ID", "")
+        # Store id diturunkan dari token (vercel_blob_rw_<storeId>_<secret>)
+        # supaya tidak bergantung pada env tambahan yang bisa tidak ter-set.
+        # Token adalah sumber otoritatif (vercel_blob_rw_<storeId>_<secret>);
+        # env BLOB_STORE_ID hanya cadangan. Ini mencegah GET jatuh ke host publik
+        # (404) yang membuat state selalu kosong -> idempotency gagal.
+        derived = ""
+        if token.startswith("vercel_blob_rw_"):
+            parts = token.split("_")
+            if len(parts) >= 5:
+                derived = parts[3]
+        self.store = (derived or store or os.environ.get("BLOB_STORE_ID") or "").lower()
 
     def _base(self) -> str:
         """Host PUBLIK untuk menulis (PUT). Membaca memakai host privat."""

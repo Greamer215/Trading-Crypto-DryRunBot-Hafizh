@@ -30,6 +30,17 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(result).encode())
         except Exception as e:  # retry terbatas: Vercel memanggil ulang via cron
+            import traceback
+            tb = traceback.format_exc()[-800:]
+            try:
+                from bot.util import Blob
+                Blob(env["BLOB_READ_WRITE_TOKEN"]).append(
+                    "log_errors", {"t": __import__("datetime").datetime.now(
+                        __import__("datetime").timezone.utc).isoformat(),
+                        "err": f"tick: {e}", "traceback": tb})
+            except Exception:
+                pass
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(json.dumps({"ok": False, "reason": str(e)[:200]}).encode())
+            self.wfile.write(json.dumps({"ok": False, "reason": str(e)[:300],
+                                         "traceback": tb}).encode())

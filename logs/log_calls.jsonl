@@ -1,1 +1,4 @@
 [{"t": "2026-11-05T01:31:30+07:00", "candle": 1793793600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T01:31:30+07:00"}]
+{"t": "2026-11-05T01:40:17+07:00", "candle": 1793793600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T01:40:17+07:00"}
+{"t": "2026-11-05T01:40:46+07:00", "candle": 1793793600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T01:40:46+07:00"}
+{"t": "2026-11-05T01:41:29+07:00", "candle": 1793793600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T01:41:29+07:00"}
