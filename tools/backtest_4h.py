@@ -94,6 +94,12 @@ def trade_stats(panels, w, cfg: CryptoConfig):
         cl = df[~df["open"].fillna(False).astype(bool)]
     else:
         cl = df
+    if len(cl) == 0 or "pnl" not in cl.columns:
+        # belum ada trade tertutup (jendela pendek / belum ada sinyal)
+        return {"n_trades": 0, "n_open": int(df.get("open", pd.Series(False)).sum()) if len(df) else 0,
+                "win_rate": 0.0, "profit_factor": float("nan"),
+                "avg_win": 0.0, "avg_loss": 0.0, "net_pnl": 0.0, "fee": 0.0,
+                "cost_share": float("nan"), "by_sym": {}}
     win = cl[cl["pnl"] > 0]; loss = cl[cl["pnl"] <= 0]
     gp, gl = win["pnl"].sum(), -loss["pnl"].sum()
     return {"n_trades": len(cl), "n_open": int(df.get("open", pd.Series(False)).sum()),

@@ -104,6 +104,33 @@ def main():
     }
     OUT.write_text(json.dumps(res, indent=1))
 
+    # Backtest pada JENDELA FORWARD YANG SEBENARNYA (bukan jendela lama):
+    # dipakai refleksi & dashboard sebagai pembanding apple-to-apple.
+    from tools.backtest_4h import run_backtest, metrics, trade_stats
+    w_win = w.loc[tz0:].iloc[: len(candles) + 1]
+    if len(w_win) > 1:
+        start_naive = str(tz0.tz_localize(None))
+        r = run_backtest(panels, w_win, cfg, cfg.capital, start=start_naive)
+        eq = r["equity"]
+        yrs = (eq.index[-1] - eq.index[0]).days / 365.25
+        ret = float(eq.iloc[-1] / eq.iloc[0] - 1)
+        mdd = float((eq / eq.cummax() - 1).min())
+        ts = trade_stats(panels, w_win, cfg)
+        bt_win = {
+            "window": [str(tz0.tz_localize(None)), str(w_win.index[-1].tz_localize(None))],
+            # CAGR tidak bermakna untuk jendela pendek: laporkan return total.
+            "cagr_window": (ret if yrs <= 0 else (1 + ret) ** (1 / yrs) - 1),
+            "mdd": mdd, "return_total": ret,
+            "n_trades": ts["n_trades"], "pf": ts["profit_factor"],
+            "wr": ts["win_rate"], "n_candles": len(w_win),
+            "hari": round(yrs * 365.25, 2),
+            "catatan": "backtest pada jendela forward yang sama, fungsi & config identik",
+        }
+        (HERE / "reports" / "backtest_forward_window.json").write_text(
+            json.dumps(bt_win, indent=1))
+        print(f"\nbacktest jendela forward: return {bt_win['return_total']:.4%} "
+              f"mdd {bt_win['mdd']:.4%} ({bt_win['n_candles']} candle)")
+
     print(f"jendela      : {res['jendela_utc'][0]} .. {res['jendela_utc'][1]}")
     print(f"candle       : {len(per_candle)} dibandingkan, {len(ok)} identik "
           f"({res['match_pct']:.1%})")

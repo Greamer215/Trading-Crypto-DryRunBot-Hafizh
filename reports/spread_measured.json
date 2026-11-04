@@ -1,83 +1,83 @@
 {
  "sumber": "snapshot /api/depth Indodax, dikumpulkan tools/collect_book.py",
  "n_files": 1,
- "n_observasi": 11,
+ "n_observasi": 66,
  "periode": [
   "2026-11-05T00:42:26+07:00",
-  "2026-11-05T00:42:26+07:00"
+  "2026-11-05T02:32:19+07:00"
  ],
- "median_spread_semua_pair": 0.002198245,
- "median_slippage_semua_pair": 0.0008185696987508078,
+ "median_spread_semua_pair": 0.002426605,
+ "median_slippage_semua_pair": 0.0007217611910752704,
  "per_pair": {
   "BTCIDR": {
-   "spread_median": 0.00070705,
-   "spread_p90": 0.00070705,
-   "n_snapshots": 1,
-   "slip_buy": 2.817948821925566e-05,
-   "slip_sell": 6.877905485198403e-07
+   "spread_median": 0.00035387,
+   "spread_p90": 0.001980595,
+   "n_snapshots": 6,
+   "slip_buy": 0.0001239764196849759,
+   "slip_sell": 0.00042092384171885734
   },
   "ETHIDR": {
-   "spread_median": 0.00018248,
-   "spread_p90": 0.00018248,
-   "n_snapshots": 2,
-   "slip_buy": 0.0004100694839958993,
-   "slip_sell": 2.2799817601459188e-05
+   "spread_median": 2.279e-05,
+   "spread_p90": 0.00017789000000000002,
+   "n_snapshots": 12,
+   "slip_buy": 0.0008483708985852842,
+   "slip_sell": 2.293525377858306e-05
   },
   "BNBIDR": {
-   "spread_median": 0.00337741,
-   "spread_p90": 0.00337741,
-   "n_snapshots": 1,
-   "slip_buy": 0.00011599336400730542,
-   "slip_sell": 4.643023462590464e-07
+   "spread_median": 0.004085165,
+   "spread_p90": 0.004088420000000001,
+   "n_snapshots": 6,
+   "slip_buy": 8.49573880319621e-05,
+   "slip_sell": 0.003357440725368845
   },
   "DOGEIDR": {
-   "spread_median": 0.001443,
-   "spread_p90": 0.001443,
-   "n_snapshots": 1,
+   "spread_median": 0.0017990850000000002,
+   "spread_p90": 0.002520835,
+   "n_snapshots": 6,
    "slip_buy": 0.0007204610951008645,
-   "slip_sell": 0.0007215007215007215
+   "slip_sell": 0.0007220216606498195
   },
   "ADAIDR": {
-   "spread_median": 0.00366817,
-   "spread_p90": 0.00366817,
-   "n_snapshots": 1,
-   "slip_buy": 0.0008426966292134832,
-   "slip_sell": 0.0011273957158962795
+   "spread_median": 0.003227995,
+   "spread_p90": 0.00352518,
+   "n_snapshots": 6,
+   "slip_buy": 0.00028256569652444194,
+   "slip_sell": 0.0002835270768358378
   },
   "XRPIDR": {
-   "spread_median": 0.00156098,
-   "spread_p90": 0.00156098,
-   "n_snapshots": 1,
-   "slip_buy": 8.418571368438776e-05,
-   "slip_sell": 4.2153184673102054e-05
+   "spread_median": 0.001557735,
+   "spread_p90": 0.0018570750000000001,
+   "n_snapshots": 6,
+   "slip_buy": 0.0007215007215007215,
+   "slip_sell": 0.0004674088552732217
   },
   "UNIIDR": {
-   "spread_median": 0.00632043,
-   "spread_p90": 0.00632043,
-   "n_snapshots": 1,
-   "slip_buy": 0.000915638676000894,
-   "slip_sell": 7.256314807961628e-06
+   "spread_median": 0.006345460000000001,
+   "spread_p90": 0.00895574,
+   "n_snapshots": 6,
+   "slip_buy": 7.274102739427092e-06,
+   "slip_sell": 2.2024814624476912e-05
   },
   "DOTIDR": {
    "spread_median": 0.01644623,
-   "spread_p90": 0.01644623,
-   "n_snapshots": 1,
-   "slip_buy": 5.657388549445576e-05,
-   "slip_sell": 0.007878090856814261
+   "spread_p90": 0.02047345,
+   "n_snapshots": 6,
+   "slip_buy": 5.764685536403989e-05,
+   "slip_sell": 0.00608695652173913
   },
   "TRXIDR": {
-   "spread_median": 0.00241629,
-   "spread_p90": 0.00241629,
-   "n_snapshots": 1,
-   "slip_buy": 0.0012052341597796144,
-   "slip_sell": 0.00017259233690024162
+   "spread_median": 0.0018989950000000001,
+   "spread_p90": 0.002761475,
+   "n_snapshots": 6,
+   "slip_buy": 0.0005167958656330749,
+   "slip_sell": 0.0003453038674033149
   },
   "LTCIDR": {
-   "spread_median": 0.0019802,
-   "spread_p90": 0.0019802,
-   "n_snapshots": 1,
-   "slip_buy": 0.0009871668311944718,
-   "slip_sell": 0.0019801980198019802
+   "spread_median": 0.002954215,
+   "spread_p90": 0.00296004,
+   "n_snapshots": 6,
+   "slip_buy": 0.0009891196834817012,
+   "slip_sell": 0.000992063492063492
   }
  },
  "catatan": "slippage di sini = biaya menembus 1 level book, proxy konservatif untuk order <= 12% modal. Backtest memakai slippage konstan config.slippage; angka ini dipakai untuk MEMVALIDASI apakah asumsi itu terlalu optimis."

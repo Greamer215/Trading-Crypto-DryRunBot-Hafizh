@@ -1,12 +1,15 @@
 {
  "window": [
-  "2026-10-01",
-  "2026-11-04"
+  "2026-11-04 12:00:00",
+  "2026-11-04 16:00:00"
  ],
- "cagr_window": -0.2829616318408462,
- "mdd": -0.04340877071475602,
- "return_total": -0.030488677216247373,
- "n_trades": 7,
- "pf": 7.920666831659447,
- "wr": 0.8571428571428571
+ "cagr_window": 0.0,
+ "mdd": 0.0,
+ "return_total": 0.0,
+ "n_trades": 0,
+ "pf": NaN,
+ "wr": 0.0,
+ "n_candles": 2,
+ "hari": 0.0,
+ "catatan": "backtest pada jendela forward yang sama, fungsi & config identik"
 }
