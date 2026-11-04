@@ -65,7 +65,7 @@ server = indodax_server_time()
 import time
 cid = last_closed_candle_id(int(time.time()), server)
 print(f"  server_time={server} candle_tertutup={cid}")
-closes = {}
+closes, opens, vols = {}, {}, {}
 for sym in UNIVERSE + [GATE_PAIR]:
     frm = cid - 400 * TF_SEC
     bars = indodax_candles(sym, frm, cid + TF_SEC)
@@ -74,10 +74,12 @@ for sym in UNIVERSE + [GATE_PAIR]:
         t = int(b["Time"])
         if t <= cid:
             ser[t] = [b["Open"], b["High"], b["Low"], b["Close"], float(b["Volume"])]
-    closes[sym] = ser
+    closes[sym] = {t: v[3] for t, v in ser.items()}
+    opens[sym] = {t: v[0] for t, v in ser.items()}
+    vols[sym] = {t: v[4] for t, v in ser.items()}
     check(f"{sym} candle terunduh", len(ser) >= 300, f"n={len(ser)}")
 
-ok, why = validate_data(closes, cid)
+ok, why = validate_data(closes, opens, vols, cid)
 print(f"  validate_data -> {ok} ({why})")
 check("validasi data lolos di kondisi normal", ok, why)
 

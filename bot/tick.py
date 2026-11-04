@@ -74,23 +74,25 @@ def compute_targets(closes, opens, vols) -> dict:
     return w.iloc[-1].to_dict()
 
 
-def validate_data(closes, upto) -> tuple[bool, str]:
-    """Validasi data sesuai daftar soal p.2. Setiap kegagalan -> no entry + alasan."""
+def validate_data(closes, opens, vols, upto) -> tuple[bool, str]:
+    """Validasi data sesuai daftar soal p.2. Setiap kegagalan -> no entry + alasan.
+
+    closes/opens/vols: {symbol: {ts: nilai}} (sudah diekstrak build_panels).
+    """
     for sym in UNIVERSE:
-        ser = closes.get(sym, {})
-        if not ser:
+        c_ser, v_ser = closes.get(sym, {}), vols.get(sym, {})
+        if not c_ser:
             return False, f"{sym}: tidak ada candle"
-        last_t = max(ser)
+        last_t = max(c_ser)
         # (a) candle terakhir lebih tua dari 2x timeframe
         if upto - last_t > 2 * TF_SEC:
             return False, f"{sym}: candle terakhir basi ({upto - last_t}s)"
         # (b) harga atau volume nol
-        v = ser.get(last_t, [0, 0, 0, 0, 0])
-        if not v[3] or not v[4]:
+        if not c_ser.get(last_t) or not v_ser.get(last_t):
             return False, f"{sym}: harga/volume nol"
         # (c) candle hilang di jendela indikator (deteksi gap)
         need = CFG.signal_lookback + 5
-        keys = sorted(k for k in ser if k <= upto)
+        keys = sorted(k for k in c_ser if k <= upto)
         if len(keys) < need:
             return False, f"{sym}: bar kurang ({len(keys)} < {need})"
         window = keys[-need:]
@@ -160,7 +162,7 @@ def tick(env) -> dict:
         snap = {}
 
     closes, opens, vols = build_panels(r, cid)
-    ok, why = validate_data(closes, cid)
+    ok, why = validate_data(closes, opens, vols, cid)
     targets = {}
     if ok:
         try:
