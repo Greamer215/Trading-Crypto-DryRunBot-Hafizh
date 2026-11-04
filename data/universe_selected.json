@@ -1,0 +1,30 @@
+{
+ "method": "median turnover Rp per bar 4h, 90 hari pertama sejak 2021-01-01",
+ "selected": [
+  "BTCIDR",
+  "ETHIDR",
+  "BNBIDR",
+  "DOGEIDR",
+  "ADAIDR",
+  "XRPIDR",
+  "UNIIDR",
+  "DOTIDR",
+  "TRXIDR",
+  "LTCIDR"
+ ],
+ "all_measured": {
+  "BTCIDR": 19525064967,
+  "ETHIDR": 8685926281,
+  "BNBIDR": 5597415203,
+  "DOGEIDR": 4409900702,
+  "ADAIDR": 3638743196,
+  "XRPIDR": 3401786038,
+  "UNIIDR": 1579768472,
+  "DOTIDR": 1335987669,
+  "TRXIDR": 1331990045,
+  "LTCIDR": 1063522524,
+  "LINKIDR": 1041785815,
+  "HBARIDR": 995361021,
+  "ETCIDR": 96891236
+ }
+}

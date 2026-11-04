@@ -1,0 +1,5 @@
+data/indodax_4h/*.csv
+reports/*.csv
+__pycache__/
+*.pyc
+.env
