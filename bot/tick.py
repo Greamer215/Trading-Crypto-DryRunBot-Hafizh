@@ -175,6 +175,8 @@ def tick(env) -> dict:
         # uptime: candle gagal diproses valid tepat waktu -> tidak dihitung terlaksana
         log("log_calls", {"t": now_iso(), "candle": cid, "action": "no_entry",
                           "why": why, "uptime": False})
+        log("log_sinyal", {"t": now_iso(), "candle": cid, "targets": None,
+                           "reason": why})
         r.set("state", state)
         return {"ok": True, "action": "no_entry", "why": why}
 
@@ -185,6 +187,9 @@ def tick(env) -> dict:
         state["processed"][str(cid)] = {"action": "no_entry", "why": book_why}
         log("log_calls", {"t": now_iso(), "candle": cid, "action": "no_entry",
                           "why": book_why, "uptime": True})
+        log("log_sinyal", {"t": now_iso(), "candle": cid,
+                           "targets": {s: float(targets.get(s, 0.0)) for s in UNIVERSE},
+                           "reason": f"book: {book_why}", "executed": False})
         r.set("state", state)
         return {"ok": True, "action": "no_entry", "why": book_why}
 
@@ -297,6 +302,11 @@ def tick(env) -> dict:
     for o in orders:
         log("log_orders", o)
     state["processed"][str(cid)] = {"action": "executed", "n_orders": len(orders)}
+    # log_sinyal: target weight per candle -> dasar perbandingan candle demi candle
+    # dengan backtest (komponen kecocokan 25% di rubrik).
+    log("log_sinyal", {"t": now_iso(), "candle": cid,
+                       "targets": {s: float(targets.get(s, 0.0)) for s in UNIVERSE},
+                       "gate_used": CFG.gate_proxy, "cap": CAP_POSITION})
     log("log_calls", {"t": now_iso(), "candle": cid, "action": "executed",
                       "n_orders": len(orders), "equity": eq, "uptime": True,
                       "processed_at": now_iso()})
