@@ -64,11 +64,15 @@ class CryptoConfig:
     time_exit_hold: int | None = 88
     time_exit_min_gain: float = 0.09
 
-    # --- biaya Indodax (terukur 2026-10-31; cek ulang sebelum freeze) ------
-    # trade_fee_percent_taker=0.20 (api/pairs); halaman resmi bila beda -> pakai
-    # yang lebih mahal (soal UAS p.2). Slippage 10 bps placeholder s/d snapshot.
-    taker_fee: float = 0.002
-    slippage: float = 0.001
+    # --- biaya Indodax (KEPATUHAN SOAL p.2: pakai yang lebih mahal) --------
+    # api/pairs trade_fee_percent_taker = 0.20% (akses 2026-10-31)
+    # HALAMAN RESMI lebih mahal -> dipakai (akses 2026-11-04):
+    #   https://help.indodax.com/hc/en-us/articles/28673592088857-Details-of-
+    #   Transaction-Fees-on-Indodax  : taker buy 0.31% / sell 0.30% (all-in)
+    # Kepatuhan soal, bukan perubahan strategi; dicatat di commit terpisah.
+    buy_fee: float = 0.0031
+    sell_fee: float = 0.0030
+    slippage: float = 0.001    # placeholder spread s/d snapshot terkumpul
     min_order_idr: float = 25_000.0                 # mode Pro (lebih ketat)
 
     # --- akun ---------------------------------------------------------------
@@ -76,11 +80,11 @@ class CryptoConfig:
 
     @property
     def total_buy(self) -> float:
-        return self.taker_fee + self.slippage
+        return self.buy_fee + self.slippage
 
     @property
     def total_sell(self) -> float:
-        return self.taker_fee + self.slippage
+        return self.sell_fee + self.slippage
 
 
 def research_config(**overrides: object) -> CryptoConfig:
