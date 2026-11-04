@@ -1,0 +1,14 @@
+{
+ "processed": {
+  "1793793600": {
+   "action": "executed",
+   "n_orders": 0
+  }
+ },
+ "cash": 100000000.0,
+ "positions": {},
+ "equity_day": "2026-11-05",
+ "equity_0d": 100000000.0,
+ "kill": false,
+ "halt": null
+}

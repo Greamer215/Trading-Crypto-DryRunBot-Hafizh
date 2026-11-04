@@ -38,11 +38,10 @@ got = b.get(key)
 print("   ", got)
 assert got["v"] == 2, got
 
-print("4. rpush dua kali")
-b.set(k2, [])
-b.rpush(k2, {"n": 1})
-b.rpush(k2, {"n": 2})
-log = b.get(k2)
+print("4. append dua entri (append-only per blob)")
+b.append(k2, {"n": 1, "t": "2026-01-01T00:00:01+07:00"})
+b.append(k2, {"n": 2, "t": "2026-01-01T00:00:02+07:00"})
+log = b.read_log(k2)
 print("   ", log)
 assert len(log) == 2 and log[1]["n"] == 2, log
 

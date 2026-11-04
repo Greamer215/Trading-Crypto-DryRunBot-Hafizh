@@ -3,7 +3,7 @@
 Storage = Vercel Blob (bawaan Vercel Hobby free, diizinkan soal p.3):
 BLOB_READ_WRITE_TOKEN di-set Vercel otomatis saat Blob di-enable di project.
 """
-import json, math, os, time, urllib.request, urllib.parse
+import json, math, os, random, string, time, urllib.request, urllib.parse
 from datetime import datetime, timezone, timedelta
 
 WIB = timezone(timedelta(hours=7))
@@ -189,20 +189,24 @@ class Blob:
              ("x-vercel-blob-access", "private")]
         return _headers(h + (extra or []))
 
-    def get(self, key: str, default=None):
-        try:
-            # cache-buster: CDN Blob menyajikan versi lama setelah overwrite
-            url = f"{self._read_url(key)}?ts={int(time.time())}"
-            req = urllib.request.Request(
-                url, headers=self._headers([("Cache-Control", "no-cache")]))
-            with urllib.request.urlopen(req, timeout=25) as r:
-                raw = r.read().decode()
-        except Exception:
-            return default
-        try:
-            return json.loads(raw)
-        except Exception:
-            return raw
+    def get(self, key: str, default=None, retries: int = 3):
+        """Baca blob. Retry singkat: propagasi CDN setelah overwrite tidak instan."""
+        for attempt in range(retries):
+            try:
+                # cache-buster: CDN Blob bisa menyajikan versi lama
+                url = f"{self._read_url(key)}?ts={int(time.time() * 1000)}"
+                req = urllib.request.Request(
+                    url, headers=self._headers([("Cache-Control", "no-cache")]))
+                with urllib.request.urlopen(req, timeout=25) as r:
+                    raw = r.read().decode()
+                try:
+                    return json.loads(raw)
+                except Exception:
+                    return raw
+            except Exception:
+                if attempt < retries - 1:
+                    time.sleep(0.6 * (attempt + 1))
+        return default
 
     def set(self, key: str, val) -> None:
         data = json.dumps(val).encode()
@@ -214,9 +218,44 @@ class Blob:
         with urllib.request.urlopen(req, timeout=25) as r:
             r.read()
 
+    def list(self, prefix: str, limit: int = 1000):
+        """Daftar blob dengan prefix (untuk membaca log append-only)."""
+        out, cursor = [], None
+        while True:
+            u = (f"https://blob.vercel-storage.com/?prefix={urllib.parse.quote(prefix)}"
+                 f"&limit={min(limit, 1000)}")
+            if cursor:
+                u += f"&cursor={urllib.parse.quote(cursor)}"
+            req = urllib.request.Request(u, headers=self._headers())
+            with urllib.request.urlopen(req, timeout=25) as r:
+                d = json.loads(r.read().decode())
+            out.extend(d.get("blobs", []))
+            cursor = d.get("cursor")
+            if not d.get("hasMore") or not cursor or len(out) >= limit:
+                break
+        return out
+
+    def append(self, prefix: str, val) -> str:
+        """Tambah satu entri log sebagai blob terpisah (append-only, tanpa race).
+
+        Key: {prefix}/{ts_ms}-{rand}.json. Dipakai untuk semua log supaya dua
+        panggilan bersamaan tidak saling menimpa (get-append-set tidak atomic).
+        """
+        key = (f"{prefix}/{int(time.time() * 1000)}-"
+               f"{''.join(random.choices(string.ascii_lowercase + string.digits, k=6))}.json")
+        self.set(key, val)
+        return key
+
+    def read_log(self, prefix: str, limit: int = 2000):
+        """Baca semua entri log berprefix, urut waktu naik."""
+        items = []
+        for b in self.list(prefix, limit=limit):
+            v = self.get(b["pathname"])
+            if v is not None:
+                items.append(v)
+        items.sort(key=lambda d: d.get("t", "") if isinstance(d, dict) else "")
+        return items
+
     def rpush(self, key: str, val) -> None:
-        cur = self.get(key, [])
-        if not isinstance(cur, list):
-            cur = []
-        cur.append(val)
-        self.set(key, cur)
+        """Kompatibilitas lama: tulis ke blob per-entri di bawah key/."""
+        self.append(key, val)
