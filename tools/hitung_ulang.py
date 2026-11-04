@@ -50,12 +50,13 @@ def main():
         "n_book_snapshots": len(books),
     }
     if len(df):
-        buys = df[df["side"] == "buy"]["notional"].sum()
-        sells = df[df["side"] == "sell"]["notional"].sum()
+        buys = float(df[df["side"] == "buy"]["notional"].sum())
+        sells = float(df[df["side"] == "sell"]["notional"].sum())
         out["notional_beli"] = round(buys, 2)
         out["notional_jual"] = round(sells, 2)
     if len(eq):
-        e0, e1 = eq["equity"].iloc[0], eq["equity"].iloc[-1]
+        e0 = float(eq["equity"].iloc[0])
+        e1 = float(eq["equity"].iloc[-1])
         out["equity_awal"] = e0
         out["equity_akhir"] = e1
         out["forward_return_total"] = round(e1 / e0 - 1, 6)
