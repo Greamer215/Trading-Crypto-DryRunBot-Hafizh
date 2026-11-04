@@ -16,13 +16,11 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok":false,"reason":"unauthorized"}')
             return
-        env = {k: os.environ[k] for k in
-               ("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN")
-               if k in os.environ}
-        if len(env) < 2:
+        env = {k: os.environ[k] for k in ("BLOB_READ_WRITE_TOKEN",) if k in os.environ}
+        if len(env) < 1:
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(b'{"ok":false,"reason":"redis env hilang"}')
+            self.wfile.write(b'{"ok":false,"reason":"BLOB_READ_WRITE_TOKEN hilang"}')
             return
         try:
             result = tick(env)

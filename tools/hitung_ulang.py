@@ -1,4 +1,4 @@
-"""Skrip hitung_ulang: reproduksi SEMUA angka dashboard dari log mentah (Redis dump).
+"""Skrip hitung_ulang: reproduksi SEMUA angka dashboard dari log mentah (Blob dump).
 
 Pemakaian: python tools/hitung_ulang.py logs/  (folder berisi log_calls.jsonl,
 log_orders.jsonl, log_equity.jsonl, log_book.jsonl, log_errors.jsonl, log_events.jsonl,

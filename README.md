@@ -11,18 +11,19 @@ Bot trading dry run Indodax di Vercel. Strategi: momentum cross-sectional beku
   https://help.indodax.com/hc/en-us/articles/28673592088857-Details-of-Transaction-Fees-on-Indodax
   taker buy 0,31% / sell 0,30% (akses 2026-11-04) -> pakai yang lebih mahal sesuai soal
 
-## Arsitektur (semua gratis)
-- **Vercel Hobby**: endpoint `/api/tick` (Python, 300s)
-- **Upstash Redis (free tier)**: state, posisi, log JSONL
+## Arsitektur (semua gratis, hanya Vercel + GitHub)
+- **Vercel Hobby**: endpoint `/api/tick` (Python, 300s) + **Vercel Blob** untuk
+  state, posisi, log JSONL (bawaan Vercel, free 1GB, diizinkan soal p.3)
 - **GitHub Actions (free)**: cron `7 */4 * * *` memanggil endpoint; menit ke-7
   sesuai saran soal (jadwal menit-0 sering telat)
 - **API publik Indodax**: candle, ticker, depth; tanpa API key
 
 ## Menjalankan
-1. Buat database Upstash Redis (REST), catat URL + token
-2. Deploy repo ke Vercel; set env: `CRON_SECRET`, `UPSTASH_REDIS_REST_URL`,
-   `UPSTASH_REDIS_REST_TOKEN`, `VERCEL_URL` (opsional `KILL_SWITCH=1`)
-3. Buat repo GitHub publik; set secrets: `CRON_SECRET`, `VERCEL_URL`
+1. Push repo ke GitHub publik (bukti freeze dari riwayat commit)
+2. Vercel: import repo -> Storage -> Create Database -> Blob (free); env
+   `BLOB_READ_WRITE_TOKEN` otomatis. Tambah env `CRON_SECRET` (string acak)
+   dan `VERCEL_URL` (opsional `KILL_SWITCH=1`)
+3. GitHub secrets: `CRON_SECRET`, `VERCEL_URL`
 4. GitHub Actions memanggil tiap 4 jam; uptime dicatat dari log panggilan
 
 ## Struktur

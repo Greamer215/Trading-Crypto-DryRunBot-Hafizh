@@ -1,4 +1,8 @@
-"""Util bot: Upstash Redis REST + Indodax publik + waktu WIB. Stdlib only."""
+"""Util bot: Vercel Blob (REST) + Indodax publik + waktu WIB. Stdlib only.
+
+Storage = Vercel Blob (bawaan Vercel Hobby free, diizinkan soal p.3):
+BLOB_READ_WRITE_TOKEN di-set Vercel otomatis saat Blob di-enable di project.
+"""
 import json, time, urllib.request, urllib.parse
 from datetime import datetime, timezone, timedelta
 
@@ -8,45 +12,14 @@ TF_SEC = TF * 60
 UA = [("User-Agent", "Mozilla/5.0"), ("Referer", "https://indodax.com/")]
 
 
-def _get(url: str, timeout: int = 25):
-    op = urllib.request.build_opener()
-    op.addheaders = UA
-    with op.open(url, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+def _headers(extra=None):
+    return dict(UA + (extra or []))
 
 
-def _post(url: str, data: str, token: str, timeout: int = 25):
-    req = urllib.request.Request(url, data=data.encode(), method="POST",
-                                 headers={"Authorization": f"Bearer {token}",
-                                          "Content-Type": "text/plain"})
+def _get(url: str, timeout: int = 25, headers=None):
+    req = urllib.request.Request(url, headers=_headers(headers))
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
-
-
-class Redis:
-    """Upstash Redis REST: get/set/rpush. Sambil hemat command (free tier)."""
-
-    def __init__(self, url: str, token: str):
-        self.url, self.token = url.rstrip("/"), token
-
-    def get(self, key: str, default=None):
-        try:
-            r = _post(f"{self.url}/get/{key}", "", self.token)
-        except Exception:
-            return default
-        v = r.get("result")
-        if v is None:
-            return default
-        try:
-            return json.loads(v)
-        except Exception:
-            return v
-
-    def set(self, key: str, val) -> None:
-        _post(f"{self.url}/set/{key}", json.dumps(val), self.token)
-
-    def rpush(self, key: str, val) -> None:
-        _post(f"{self.url}/rpush/{key}", json.dumps(val), self.token)
 
 
 def indodax_candles(symbol: str, frm: int, to: int, tf: int = TF):
@@ -96,3 +69,46 @@ def wib_day(ts_utc: int) -> str:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).astimezone(WIB).isoformat(timespec="seconds")
+
+
+class Blob:
+    """State + log di Vercel Blob via REST. Interface get/set/rpush.
+
+    GET publik per blob URL; PUT butuh Bearer BLOB_READ_WRITE_TOKEN.
+    rpush = get -> append -> set (volume kecil, 6 tick/hari, aman).
+    """
+
+    def __init__(self, token: str):
+        self.token = token
+
+    def _url(self, key: str) -> str:
+        return f"https://blob.vercel-storage.com/{urllib.parse.quote(key)}"
+
+    def get(self, key: str, default=None):
+        try:
+            req = urllib.request.Request(self._url(key))
+            with urllib.request.urlopen(req, timeout=25) as r:
+                raw = r.read().decode()
+        except Exception:
+            return default
+        try:
+            return json.loads(raw)
+        except Exception:
+            return raw
+
+    def set(self, key: str, val) -> None:
+        data = json.dumps(val).encode()
+        req = urllib.request.Request(
+            self._url(key), data=data, method="PUT",
+            headers=_headers([("Authorization", f"Bearer {self.token}"),
+                              ("x-api-version", "4"),
+                              ("Content-Type", "application/json")]))
+        with urllib.request.urlopen(req, timeout=25) as r:
+            r.read()
+
+    def rpush(self, key: str, val) -> None:
+        cur = self.get(key, [])
+        if not isinstance(cur, list):
+            cur = []
+        cur.append(val)
+        self.set(key, cur)

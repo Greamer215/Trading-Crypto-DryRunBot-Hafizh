@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bot.util import (Redis, TF, TF_SEC, WIB, indodax_candles, indodax_depth,
+from bot.util import (Blob, TF, TF_SEC, WIB, indodax_candles, indodax_depth,
                       indodax_server_time, indodax_ticker_all, last_closed_candle_id,
                       now_iso, vwap_fill, wib_day)
 
@@ -30,8 +30,8 @@ from logic.core import cap_position_weights
 CFG = CryptoConfig()  # config beku; satu-satunya sumber parameter
 
 
-def fetch_close_series(r: Redis, symbol: str, upto: int, need: int):
-    """Panel close 4h per pair dari candle terkunci cache Redis + API."""
+def fetch_close_series(r: Blob, symbol: str, upto: int, need: int):
+    """Panel close 4h per pair dari candle terkunci cache Blob + API."""
     cache = r.get(f"candles:{symbol}", {"bars": {}})
     bars = dict(cache["bars"])
     frm = upto - need * TF_SEC
@@ -47,7 +47,7 @@ def fetch_close_series(r: Redis, symbol: str, upto: int, need: int):
     return {int(k): bars[str(k)] for k in keys}
 
 
-def build_panels(r: Redis, upto: int, need: int = 400):
+def build_panels(r: Blob, upto: int, need: int = 400):
     closes, opens, vols = {}, {}, {}
     for sym in UNIVERSE + [GATE_PAIR]:
         ser = fetch_close_series(r, sym, upto, need + 200)
@@ -86,7 +86,7 @@ def validate_data(closes, upto) -> tuple[bool, str]:
 
 
 def tick(env) -> dict:
-    r = Redis(env["UPSTASH_REDIS_REST_URL"], env["UPSTASH_REDIS_REST_TOKEN"])
+    r = Blob(env["BLOB_READ_WRITE_TOKEN"])
     log = lambda k, v: r.rpush(k, v)  # noqa: E731
     now = int(datetime.now(timezone.utc).timestamp())
     try:
@@ -215,5 +215,5 @@ def tick(env) -> dict:
 
 if __name__ == "__main__":
     import os
-    env = {k: os.environ[k] for k in ("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN") if k in os.environ}
+    env = {k: os.environ[k] for k in ("BLOB_READ_WRITE_TOKEN",) if k in os.environ}
     print(json.dumps(tick(env), indent=1))
