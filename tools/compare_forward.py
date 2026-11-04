@@ -62,7 +62,9 @@ def main():
     panels = load_4h(sel)
     panels["universe_fixed"] = sel
     w = cap_position_weights(build_crypto_weights(panels, cfg), cfg.position_weight_cap)
-    w.index = pd.to_datetime(w.index, utc=True)
+    # index data lokal tz-naive (UTC); samakan agar lookup candle bot bisa ketemu
+    if w.index.tz is None:
+        w.index = w.index.tz_localize("UTC")
     tz0 = pd.Timestamp(candles[0], unit="s", tz="UTC")
 
     diffs, per_candle = [], []

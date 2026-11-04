@@ -1,0 +1,25 @@
+{
+ "jendela_utc": [
+  "2026-11-04T12:00:00+00:00",
+  "2026-11-04T12:00:00+00:00"
+ ],
+ "n_candle_dibandingkan": 1,
+ "n_identik": 1,
+ "match_pct": 1.0,
+ "max_abs_diff_semua": 0.0,
+ "toleransi": 1e-06,
+ "detail": [
+  {
+   "candle": 1793793600,
+   "iso_utc": "2026-11-04T12:00:00+00:00",
+   "max_abs_diff": 0.0,
+   "identik": true,
+   "pair_bot": [],
+   "pair_backtest": [],
+   "hanya_bot": [],
+   "hanya_backtest": [],
+   "exposure_bot": 0.0,
+   "exposure_backtest": 0.0
+  }
+ ]
+}

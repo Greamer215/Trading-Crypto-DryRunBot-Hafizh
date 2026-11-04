@@ -20,7 +20,7 @@ sys.path.insert(0, str(HERE))
 from bot.util import Blob
 
 PREFIXES = ["log_calls", "log_orders", "log_equity", "log_book",
-            "log_errors", "log_events"]
+            "log_errors", "log_events", "log_sinyal"]
 
 
 def load_env():
