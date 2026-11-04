@@ -1,20 +1,20 @@
 {
- "n_panggilan_terjadwal": 4,
- "n_panggilan_executed": 4,
- "n_skip_dup": 0,
+ "n_panggilan_terjadwal": 10,
+ "n_panggilan_executed": 5,
+ "n_skip_dup": 5,
  "n_no_entry": 0,
  "n_error_api": 0,
  "kill_switch_events": 0,
  "daily_loss_limit_events": 0,
  "n_orders": 0,
  "total_fee": 0,
- "n_book_snapshots": 4,
+ "n_book_snapshots": 5,
  "equity_awal": 100000000.0,
  "equity_akhir": 100000000.0,
  "forward_return_total": 0.0,
  "forward_mdd": 0.0,
  "uptime_candle": "1/1",
  "uptime_pct": 1.0,
- "spread_median_terukur": 0.001968,
- "n_spread_obs": 40
+ "spread_median_terukur": 0.001971,
+ "n_spread_obs": 50
 }

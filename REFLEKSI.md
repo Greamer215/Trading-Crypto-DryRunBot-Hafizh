@@ -1,6 +1,6 @@
 # Refleksi: Backtest vs Forward Test
 
-Dibuat otomatis 2026-11-05 03:04 WIB dari
+Dibuat otomatis 2026-11-05 03:19 WIB dari
 `reports/` dan `logs/`. Angka di sini identik dengan dashboard dan
 `tools/hitung_ulang.py`; tidak ada yang ditulis manual.
 
@@ -21,7 +21,7 @@ dibandingkan: 2026-11-04 12:00:00 .. 2026-11-04 16:00:00.
 
 ## 2. Kecocokan sinyal candle demi candle (komponen 25%)
 
-**100,00% identik** dari 1 candle, max selisih absolut 0.0
+**100,00% identik** dari 2 candle, max selisih absolut 0.0
 
 Metode: `tools/compare_forward.py` menjalankan ulang backtest pada jendela
 forward dengan fungsi (`logic.build_crypto_weights`) dan config yang **sama
@@ -46,8 +46,8 @@ Fee yang benar-benar dibayar di forward test: **Rp0** dari 0 order.
 
 | Item | Nilai |
 |---|---|
-| Panggilan diterima | 10 |
-| Diproses (executed) | 5 |
+| Panggilan diterima | 11 |
+| Diproses (executed) | 6 |
 | Duplikat ditolak (skip_dup) | 5 |
 | No entry (validasi gagal) | 0 |
 | Uptime candle | 1/1 (100,00%) |

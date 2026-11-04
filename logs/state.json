@@ -3,6 +3,10 @@
   "1793793600": {
    "action": "executed",
    "n_orders": 0
+  },
+  "1793808000": {
+   "action": "executed",
+   "n_orders": 0
   }
  },
  "cash": 100000000.0,
