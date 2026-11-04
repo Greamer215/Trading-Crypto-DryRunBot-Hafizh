@@ -14,7 +14,7 @@ sel = json.loads((HERE / "data" / "universe_selected.json").read_text())["select
 panels = load_4h(sel)
 panels["universe_fixed"] = sel
 cfg = CryptoConfig()
-w = cap_position_weights(build_crypto_weights(panels, cfg), 0.20).loc[START:END]
+w = cap_position_weights(build_crypto_weights(panels, cfg), cfg.position_weight_cap).loc[START:END]
 res = run_backtest(panels, w, cfg, cfg.capital, start=START)
 m = metrics(res["equity"].loc[:END] if END else res["equity"])
 ts = trade_stats(panels, w, cfg)

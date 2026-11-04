@@ -29,7 +29,7 @@ Bot trading dry run Indodax di Vercel. Strategi: momentum cross-sectional beku
 ## Struktur
 - `logic/core.py` = core strategy verbatim dari algo IDX (TIDAK diubah)
 - `logic/config.py` = CryptoConfig beku (kalibrasi crypto terdokumentasi)
-- `logic/pipeline.py` = adapter crypto (gate proxy BTC/IDR, tanpa lot/ARA)
+- `logic/pipeline.py` = adapter crypto (gate proxy ETH/IDR, tanpa lot/ARA)
 - `bot/tick.py` = satu panggilan = satu candle: validasi data, sinyal, eksekusi
   simulasi ask/bid, risk check, log
 - `api/tick.py` = endpoint Vercel (CRON_SECRET)
@@ -38,7 +38,7 @@ Bot trading dry run Indodax di Vercel. Strategi: momentum cross-sectional beku
 - `tools/fetch_4h.py`, `tools/select_universe.py` = data + universe anti-survivorship
 
 ## Risk management (wajib soal)
-- Batas posisi terbuka: 10; bobot maks 20% per pair
+- Batas posisi terbuka: 10; bobot maks 12% per pair
 - Daily loss limit -5% equity harian (batas hari 00.00 WIB) -> stop entry
 - Kill switch: env `KILL_SWITCH=1`, aktif tanpa redeploy, tercatat di log
 - Idempotency: satu candle hanya diproses sekali

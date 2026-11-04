@@ -1,7 +1,7 @@
 """Pipeline crypto: panels 4h -> target weight harian-bot. Core import dari logic.core.
 
 Urutan identik IDX (build_target_weights): universe -> signal -> weighting ->
-scale-in -> gate (proxy BTC/IDR) -> time exit. Fraksi lot, ARA/ARB, gap kalender
+scale-in -> gate (proxy ETH/IDR) -> time exit. Fraksi lot, ARA/ARB, gap kalender
 libur TIDAK dipakai (crypto 24/7, tanpa lot, tanpa ARA).
 """
 from __future__ import annotations

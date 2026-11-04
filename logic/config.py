@@ -8,7 +8,7 @@ YANG DIKALIBRASI hanya lapisan parameter + adapter (keputusan user 2026-10-31):
     time_exit_hold 44, min_gain 0.09  (tetap dalam satuan bar)
   - universe: top likuiditas diukur di AWAL backtest (anti-survivorship, soal UAS p.2)
     via trailing median turnover Rp, sama definisinya dgn IDX tapi pair crypto
-  - market gate: proxy = BTC/IDR (pengganti IHSG; crypto 24/7 tidak punya indeks)
+  - market gate: proxy = ETH/IDR (pengganti IHSG; crypto 24/7 tidak punya indeks)
   - biaya: taker Indodax 0.20%/sisi (api/pairs 2026-10-31, trade_fee_percent_taker)
     vs halaman resmi (cek ulang sebelum freeze, pakai yang lebih mahal) + slip
   - kalender 24/7, bar 4 jam, tanpa lot, min order Rp25.000
@@ -50,8 +50,16 @@ class CryptoConfig:
     max_scale: float = 1.25
     max_entry_gap: float = 0.10
 
-    # --- market gate: proxy BTC/IDR (adapter; IDX pakai IHSG) --------------
-    gate_proxy: str = "BTCIDR"                      # kolom pair gate di panels
+    # --- market gate: proxy ETH/IDR (adapter; IDX pakai IHSG) --------------
+    # ADOPSI 2026-11-04 (keputusan user, opsi gate ETH): ETH lebih cepat
+    # merespons rotasi alt daripada BTC. Backtest fee resmi: CAGR 20.49% /
+    # Cal 0.29 / PF 1.48 vs BTC-gate 9.71%/0.13/1.38; menang split-half
+    # KEDUA paruh (H1 34.60%/0.50, H2 7.66%/0.13 vs BTC 12.76%/0.18,
+    # 6.83%/0.12). CATATAN PROTOKOL: freeze commit b0a6288 (12.15 WIB)
+    # memuat gate BTC; gate ETH diadopsi SETELAH jadwal freeze 12.00 lewat
+    # atas keputusan eksplisit user, konsekuensi pengurangan nilai telat
+    # freeze diterima. Freeze efektif = commit adopsi ini.
+    gate_proxy: str = "ETHIDR"                      # kolom pair gate di panels
     gate_k: float = 4000.0
     gate_b: float = 0.5
     gate_window: int = 120
@@ -74,6 +82,17 @@ class CryptoConfig:
     sell_fee: float = 0.0030
     slippage: float = 0.001    # placeholder spread s/d snapshot terkumpul
     min_order_idr: float = 25_000.0                 # mode Pro (lebih ketat)
+
+    # --- normalisasi risiko per nama (adapter crypto, BUKAN core) ----------
+    # KALIBRASI CRYPTO 2026-11-04 (keputusan user): 0.20 -> 0.12.
+    # Equal-weight 20% dirancang untuk vol saham 20-40%/thn. Pair crypto
+    # 52-118%/thn, jadi 20% per nama = risiko 2-3x. Grid (reports/grid_dd.csv,
+    # cand_equal.csv): cap adalah SATU-SATUNYA lever DD yang naik monoton di
+    # KEDUA paruh, H2 Calmar 0.134 -> 0.157 -> 0.173 -> 0.185 (cap .20/.15/.12/.10)
+    # dengan CAGR H2 hanya turun 7.66% -> 6.38%. Ditolak: vol targeting (PF
+    # 1.48->1.07, memotong pemenang karena vol tinggi = fase tren naik) dan DD
+    # governor (menang H1 saja; H2 Calmar 0.053, eksposur terkunci di lantai).
+    position_weight_cap: float = 0.12
 
     # --- akun ---------------------------------------------------------------
     capital: float = 100_000_000.0                  # Rp100jt virtual (soal UAS)

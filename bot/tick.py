@@ -16,18 +16,18 @@ from bot.util import (Blob, TF, TF_SEC, WIB, indodax_candles, indodax_depth,
 
 HERE = Path(__file__).resolve().parent.parent
 UNIVERSE = json.loads((HERE / "data" / "universe_selected.json").read_text())["selected"]
-GATE_PAIR = "BTCIDR"
 MIN_ORDER = 25_000.0
-BUY_FEE, SELL_FEE, SLIP = 0.0031, 0.0030, 0.001
 DAILY_LOSS_LIMIT = 0.05        # -5% equity harian -> stop entry s/d ganti hari WIB
 MAX_POS = 10                   # batas posisi terbuka (risk management soal)
-CAP_POSITION = 0.20
 
 # --- import logika backtest yang SAMA (persyaratan soal: kode sama) ---------
 from logic import CryptoConfig, build_crypto_weights
 from logic.core import cap_position_weights
 
 CFG = CryptoConfig()  # config beku; satu-satunya sumber parameter
+GATE_PAIR = CFG.gate_proxy  # ETHIDR, satu sumber dengan backtest
+CAP_POSITION = CFG.position_weight_cap  # 0.12, satu sumber dengan backtest
+BUY_FEE, SELL_FEE, SLIP = CFG.buy_fee, CFG.sell_fee, CFG.slippage
 
 
 def fetch_close_series(r: Blob, symbol: str, upto: int, need: int):

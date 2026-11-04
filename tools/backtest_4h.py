@@ -1,8 +1,9 @@
 """Backtest penuh UAS: algo frozen (lookback BEKU) di 10 pair universe 4h.
 
-Biaya: taker 0.20%/sisi (api/pairs terukur 2026-10-31) + slip 10bps placeholder.
+Biaya: taker 0.31%/0.30% all-in (halaman resmi Indodax, lebih mahal dari
+api/pairs 0.20%; akses 2026-11-04) + slip 10bps placeholder.
 REALISTIS crypto: eksekusi open next bar, tanpa lot, min order Rp25rb.
-Gate proxy: BTCIDR (adapter crypto 24/7, bukan IHSG).
+Gate proxy: ETHIDR (adapter crypto 24/7, bukan IHSG). Cap posisi: config.
 """
 import json, sys
 from pathlib import Path
@@ -124,7 +125,7 @@ def main():
     panels["universe_fixed"] = sel
     print(f"range: {panels['close'].index[0]} .. {panels['close'].index[-1]}, bar: {len(panels['close'])}")
     w = build_crypto_weights(panels, cfg)
-    w = cap_position_weights(w, 0.20)
+    w = cap_position_weights(w, cfg.position_weight_cap)
     res = run_backtest(panels, w, cfg, cfg.capital)
     m = metrics(res["equity"])
     ts = trade_stats(panels, w, cfg)
