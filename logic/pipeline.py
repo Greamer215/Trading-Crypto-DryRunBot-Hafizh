@@ -3,8 +3,21 @@
 Urutan identik IDX (build_target_weights): universe -> signal -> weighting ->
 scale-in -> gate (proxy ETH/IDR) -> time exit. Fraksi lot, ARA/ARB, gap kalender
 libur TIDAK dipakai (crypto 24/7, tanpa lot, tanpa ARA).
+
+PERBEDAAN DISENGAJA dari core IDX (keputusan user 2026-11-04, opsi 2):
+`crypto_trend_score` memakai slope murni tanpa pengali t-stat. Alasan terukur
+(tools/diag_score.py): skor core = slope * max(0,tstat) = slope^2/se, sehingga
+50.7% observasi bernilai 0 PERSIS, dan di 13.9% bar SEMUA pair skor <= 0 ->
+equal_weights jatuh ke tie-break method="first" = urutan kolom = bot membeli
+BTC/ETH/BNB/DOGE/ADA 100% konsisten bukan karena sinyal. Ditambah 35.9% bar
+hanya 1-4 kandidat positif: ~49.8% bar seleksinya sebagian/seluruhnya arbitrer.
+Varian slope murni menang di KEDUA paruh (Calmar median 0.430 vs 0.320, H2
+0.238 vs 0.175, H2-min 0.156 vs 0.097, turnover turun, sd fase sama).
 """
 from __future__ import annotations
+
+import numpy as np
+import pandas as pd
 
 from .config import CryptoConfig
 from .core import (
@@ -13,9 +26,21 @@ from .core import (
     scale_in_overlay,
     soft_market_gate,
     time_exit_overlay,
-    trend_reg_score,
     equal_weights,
+    _rolling_ols_slope_tstat,
 )
+
+
+def crypto_trend_score(close: pd.DataFrame, lookback: int = 60) -> pd.DataFrame:
+    """score = OLS slope(log close) murni. Sign-aware, tanpa pengali t-stat.
+
+    Bedanya dari core ``trend_reg_score``: t-stat tidak di-clip ke 0, jadi pair
+    yang tren turun mendapat skor NEGATIF (bukan 0). Ini yang menghilangkan
+    gerombolan nilai 0 yang membuat seleksi jatuh ke urutan kolom.
+    """
+    log_close = np.log(close.replace(0.0, np.nan))
+    slope, _ = _rolling_ols_slope_tstat(log_close, lookback)
+    return slope.where(np.isfinite(slope))
 
 
 def build_crypto_weights(panels, cfg: CryptoConfig | None = None):
@@ -35,7 +60,7 @@ def build_crypto_weights(panels, cfg: CryptoConfig | None = None):
     mask = liq & keep_cols.reindex(close.columns)
     mask = mask.reindex(index=close.index, columns=close.columns).fillna(False)
 
-    score = trend_reg_score(close, cfg.signal_lookback)
+    score = crypto_trend_score(close, cfg.signal_lookback)
     eligible = score.notna() & close.notna() & (close > 0) & mask.reindex_like(score)
     base = equal_weights(score, eligible, close, n_top=cfg.n_top,
                          vol_window=cfg.vol_window)
