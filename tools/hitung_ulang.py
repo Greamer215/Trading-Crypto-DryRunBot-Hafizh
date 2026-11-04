@@ -16,10 +16,21 @@ BUY_FEE, SELL_FEE, SLIP = 0.0031, 0.0030, 0.001
 
 
 def load(name):
+    """Baca JSONL. Toleran terhadap baris berisi array (format lama rpush)."""
     p = LOGS / f"{name}.jsonl"
     if not p.exists():
         return []
-    return [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+    out = []
+    for line in p.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        v = json.loads(line)
+        if isinstance(v, list):
+            out.extend(v)          # baris berisi array entri
+        else:
+            out.append(v)
+    return out
 
 
 def main():
