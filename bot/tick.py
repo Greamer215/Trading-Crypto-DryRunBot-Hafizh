@@ -11,14 +11,16 @@ from datetime import datetime, timezone
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bot.util import (Blob, TF, TF_SEC, WIB, indodax_candles, indodax_depth,
-                      indodax_server_time, indodax_ticker_all, last_closed_candle_id,
-                      now_iso, vwap_fill, wib_day)
+                      indodax_pairs, indodax_server_time, indodax_ticker_all,
+                      last_closed_candle_id, now_iso, pair_key, round_qty,
+                      round_to_tick, vwap_fill, wib_day)
 
 HERE = Path(__file__).resolve().parent.parent
 UNIVERSE = json.loads((HERE / "data" / "universe_selected.json").read_text())["selected"]
 MIN_ORDER = 25_000.0
 DAILY_LOSS_LIMIT = 0.05        # -5% equity harian -> stop entry s/d ganti hari WIB
 MAX_POS = 10                   # batas posisi terbuka (risk management soal)
+MAX_SPREAD = 0.02              # soal p.2: bid-ask > 2% -> no entry
 
 # --- import logika backtest yang SAMA (persyaratan soal: kode sama) ---------
 from logic import CryptoConfig, build_crypto_weights
@@ -73,20 +75,48 @@ def compute_targets(closes, opens, vols) -> dict:
 
 
 def validate_data(closes, upto) -> tuple[bool, str]:
-    """Syarat soal: candle basi, gap, harga/vol nol -> no entry + alasan."""
+    """Validasi data sesuai daftar soal p.2. Setiap kegagalan -> no entry + alasan."""
     for sym in UNIVERSE:
         ser = closes.get(sym, {})
-        last_t = max(ser) if ser else 0
+        if not ser:
+            return False, f"{sym}: tidak ada candle"
+        last_t = max(ser)
+        # (a) candle terakhir lebih tua dari 2x timeframe
         if upto - last_t > 2 * TF_SEC:
             return False, f"{sym}: candle terakhir basi ({upto - last_t}s)"
+        # (b) harga atau volume nol
         v = ser.get(last_t, [0, 0, 0, 0, 0])
         if not v[3] or not v[4]:
             return False, f"{sym}: harga/volume nol"
+        # (c) candle hilang di jendela indikator (deteksi gap)
+        need = CFG.signal_lookback + 5
+        keys = sorted(k for k in ser if k <= upto)
+        if len(keys) < need:
+            return False, f"{sym}: bar kurang ({len(keys)} < {need})"
+        window = keys[-need:]
+        expected = (window[-1] - window[0]) // TF_SEC + 1
+        if len(window) != expected:
+            return False, f"{sym}: candle hilang di jendela indikator ({len(window)}/{expected})"
+    return True, "ok"
+
+
+def validate_book(snap) -> tuple[bool, str]:
+    """Validasi order book: kosong atau spread > 2% -> no entry (soal p.2)."""
+    for sym in UNIVERSE:
+        b = snap.get(sym) or {}
+        bid, ask = b.get("bid") or 0.0, b.get("ask") or 0.0
+        if bid <= 0 or ask <= 0:
+            return False, f"{sym}: order book kosong (bid={bid}, ask={ask})"
+        if ask < bid:
+            return False, f"{sym}: book rusak (ask {ask} < bid {bid})"
+        spread = (ask - bid) / bid
+        if spread > MAX_SPREAD:
+            return False, f"{sym}: spread {spread:.2%} > {MAX_SPREAD:.0%}"
     return True, "ok"
 
 
 def tick(env) -> dict:
-    r = Blob(env["BLOB_READ_WRITE_TOKEN"])
+    r = Blob(env["BLOB_READ_WRITE_TOKEN"], store=env.get("BLOB_STORE_ID"))
     log = lambda k, v: r.rpush(k, v)  # noqa: E731
     now = int(datetime.now(timezone.utc).timestamp())
     try:
@@ -120,7 +150,7 @@ def tick(env) -> dict:
         tickers = indodax_ticker_all()
         snap = {}
         for sym in UNIVERSE:
-            t = tickers.get(sym.lower(), {})
+            t = tickers.get(pair_key(sym), {})
             snap[sym] = {"bid": float(t.get("buy", 0) or 0),
                          "ask": float(t.get("sell", 0) or 0),
                          "last": float(t.get("last", 0) or 0)}
@@ -140,9 +170,21 @@ def tick(env) -> dict:
             ok, why = False, f"sinyal gagal: {e}"
     if not ok:
         state["processed"][str(cid)] = {"action": "no_entry", "why": why}
-        log("log_calls", {"t": now_iso(), "candle": cid, "action": "no_entry", "why": why})
+        # uptime: candle gagal diproses valid tepat waktu -> tidak dihitung terlaksana
+        log("log_calls", {"t": now_iso(), "candle": cid, "action": "no_entry",
+                          "why": why, "uptime": False})
         r.set("state", state)
         return {"ok": True, "action": "no_entry", "why": why}
+
+    # validasi order book (kosong / spread > 2%) -> no entry, tapi ini bukan
+    # kegagalan data candle: sinyal tetap tercatat, eksekusi ditahan
+    book_ok, book_why = validate_book(snap)
+    if not book_ok:
+        state["processed"][str(cid)] = {"action": "no_entry", "why": book_why}
+        log("log_calls", {"t": now_iso(), "candle": cid, "action": "no_entry",
+                          "why": book_why, "uptime": True})
+        r.set("state", state)
+        return {"ok": True, "action": "no_entry", "why": book_why}
 
     # equity harian + daily loss limit (batas hari WIB 00.00)
     day = wib_day(now)
@@ -159,6 +201,13 @@ def tick(env) -> dict:
         log("log_events", {"t": now_iso(), "event": "daily_loss_limit", "eq": eq, "eq0": eq0})
 
     # eksekusi simulasi: delta target vs posisi, beli di ask, jual di bid
+    # Depth diambil per pair yang bertransaksi (VWAP multi-level, soal p.2).
+    pairs_meta = {}
+    try:
+        pairs_meta = indodax_pairs()
+    except Exception as e:
+        log("log_errors", {"t": now_iso(), "err": f"pairs: {e}"})
+
     orders = []
     for sym in UNIVERSE:
         tgt_val = float(targets.get(sym, 0.0)) * 100_000_000.0
@@ -174,41 +223,81 @@ def tick(env) -> dict:
             delta = max(state["cash"] - MIN_ORDER, 0.0)
             if delta < MIN_ORDER:
                 continue
+
+        # --- depth: habiskan level berikutnya, pakai harga rata-rata (soal p.2)
+        meta = pairs_meta.get(sym.lower(), {}) or {}
+        tick = float(meta.get("tick", 0) or 0)
+        qty_step = float(meta.get("qty_step", 0) or 0)
         book_sym = snap.get(sym, {})
-        # ticker_all = level terbaik saja; vwap level-dalam butuh /api/depth
-        px = book_sym.get("ask" if side == "buy" else "bid", 0)
-        if not px:
+        best = book_sym.get("ask" if side == "buy" else "bid", 0)
+        if not best:
+            log("log_errors", {"t": now_iso(), "err": f"{sym}: best price kosong, order dilewati"})
             continue
+        try:
+            depth = indodax_depth(sym.lower())
+            # depth Indodax: {'buy': [...bid terbaik dulu], 'sell': [...ask terbaik dulu]}
+            raw = (depth.get("sell") or []) if side == "buy" else (depth.get("buy") or [])
+            levels = [(lv[0], lv[1]) for lv in raw][:20]
+        except Exception as e:
+            log("log_errors", {"t": now_iso(), "err": f"{sym}: depth gagal ({e}), pakai best"})
+            levels = [(best, 1e18)]
+
+        avg_px, filled_qty = vwap_fill(levels, abs(delta))
+        if not avg_px or filled_qty <= 0:
+            log("log_errors", {"t": now_iso(), "err": f"{sym}: book tidak cukup, order dilewati"})
+            continue
+        avg_px = round_to_tick(avg_px, tick, side)
+        levels_used = 1
+        cum = 0.0
+        for px, vol in levels:
+            cum += float(px) * float(vol)
+            if cum >= abs(delta):
+                break
+            levels_used += 1
+
+        spread_at_fill = ((book_sym.get("ask", 0) - book_sym.get("bid", 0))
+                          / max(book_sym.get("bid", 1), 1e-12))
+        slip_vs_best = abs(avg_px - best) / best if best else 0.0
+
         fee = (BUY_FEE if side == "buy" else SELL_FEE) + SLIP
         if side == "buy":
+            qty = round_qty(filled_qty, qty_step)
+            if qty <= 0:
+                continue
             cost = delta * (1 + fee)
-            qty = delta / px
             state["cash"] -= cost
             state["positions"][sym] = {"qty": (cur["qty"] if cur else 0) + qty,
-                                       "entry": px, "candle": cid}
+                                       "entry": avg_px, "candle": cid}
             orders.append({"t": now_iso(), "candle": cid, "sym": sym, "side": side,
-                           "qty": qty, "px": px, "notional": delta, "fee": cost - delta,
+                           "qty": qty, "px": avg_px, "px_best": best,
+                           "levels": levels_used, "slip_vs_best": slip_vs_best,
+                           "spread": spread_at_fill,
+                           "notional": delta, "fee": cost - delta,
                            "signal_px": closes[sym].get(cid)})
         else:
-            qty = min(cur["qty"], delta / px)
-            gross = qty * px
+            qty = min(round_qty(cur["qty"], qty_step), round_qty(filled_qty, qty_step))
+            if qty <= 0:
+                continue
+            gross = qty * avg_px
             net = gross * (1 - fee)
             state["cash"] += net
             rem = cur["qty"] - qty
-            if rem * px < MIN_ORDER:
-                state["cash"] += 0  # sisa di bawah min order tetap ditahan
             state["positions"][sym] = {"qty": rem, "entry": cur["entry"],
-                                       "candle": cur["candle"]} if rem > 0 else None
+                                       "candle": cur["candle"]} if rem * avg_px >= MIN_ORDER else None
             if state["positions"][sym] is None:
                 del state["positions"][sym]
             orders.append({"t": now_iso(), "candle": cid, "sym": sym, "side": side,
-                           "qty": qty, "px": px, "notional": gross, "fee": gross - net,
+                           "qty": qty, "px": avg_px, "px_best": best,
+                           "levels": levels_used, "slip_vs_best": slip_vs_best,
+                           "spread": spread_at_fill,
+                           "notional": gross, "fee": gross - net,
                            "signal_px": closes[sym].get(cid)})
     for o in orders:
         log("log_orders", o)
     state["processed"][str(cid)] = {"action": "executed", "n_orders": len(orders)}
     log("log_calls", {"t": now_iso(), "candle": cid, "action": "executed",
-                      "n_orders": len(orders), "equity": eq})
+                      "n_orders": len(orders), "equity": eq, "uptime": True,
+                      "processed_at": now_iso()})
     r.set("state", state)
     return {"ok": True, "action": "executed", "orders": len(orders), "equity": eq}
 

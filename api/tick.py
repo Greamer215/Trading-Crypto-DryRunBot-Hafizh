@@ -16,8 +16,9 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok":false,"reason":"unauthorized"}')
             return
-        env = {k: os.environ[k] for k in ("BLOB_READ_WRITE_TOKEN",) if k in os.environ}
-        if len(env) < 1:
+        env = {k: os.environ[k] for k in ("BLOB_READ_WRITE_TOKEN", "BLOB_STORE_ID", "KILL_SWITCH")
+               if k in os.environ}
+        if "BLOB_READ_WRITE_TOKEN" not in env:
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b'{"ok":false,"reason":"BLOB_READ_WRITE_TOKEN hilang"}')

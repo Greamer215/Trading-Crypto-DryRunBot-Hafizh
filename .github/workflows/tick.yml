@@ -1,20 +1,41 @@
-name: tick setiap 4 jam (menit ke-7, saran soal)
+name: tick setiap 4 jam
 
+# Soal p.3: jadwal di menit selain 0 (menit ke-7) karena menit 0 sering terlambat.
+# Timeframe 4h -> 6 panggilan/hari. Uptime dihitung dari log bot, bukan dari sini.
 on:
   schedule:
     - cron: '7 */4 * * *'
   workflow_dispatch: {}
 
+concurrency:
+  group: tick
+  cancel-in-progress: false
+
 jobs:
   tick:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: panggil endpoint /api/tick
+      - name: Panggil /api/tick
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
         run: |
-          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            --max-time 120 \
-            "${{ secrets.VERCEL_URL }}/api/tick")
-          echo "$TS http=$CODE $(cat /tmp/resp.json)" >> log_calls_gh.log
-          cat log_calls_gh.log
+          set -u
+          if [ -z "${CRON_SECRET:-}" ] || [ -z "${VERCEL_URL:-}" ]; then
+            echo "SEKRET BELUM DISET: CRON_SECRET / VERCEL_URL" >&2
+            exit 1
+          fi
+          SCHED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "jadwal_utc=$SCHED"
+          BODY=$(mktemp)
+          CODE=$(curl -sS -o "$BODY" -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            --max-time 180 \
+            "${VERCEL_URL%/}/api/tick" || echo "000")
+          echo "http=$CODE"
+          echo "respons=$(cat "$BODY")"
+          if [ "$CODE" != "200" ]; then
+            echo "panggilan gagal (http $CODE)" >&2
+            exit 1
+          fi
