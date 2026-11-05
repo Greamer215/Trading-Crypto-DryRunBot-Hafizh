@@ -1,6 +1,6 @@
 # Refleksi: Backtest vs Forward Test
 
-Dibuat otomatis 2026-11-05 03:19 WIB dari
+Dibuat otomatis 2026-11-05 09:46 WIB dari
 `reports/` dan `logs/`. Angka di sini identik dengan dashboard dan
 `tools/hitung_ulang.py`; tidak ada yang ditulis manual.
 
@@ -17,11 +17,40 @@ Dibuat otomatis 2026-11-05 03:19 WIB dari
 Selisih forward vs backtest pada jendela yang sama (forward dikurangi backtest):
 **return +0,00%**, **drawdown +0,00%**. Tanda negatif
 berarti forward lebih buruk; positif berarti lebih baik. Jendela forward yang
-dibandingkan: 2026-11-04 12:00:00 .. 2026-11-04 16:00:00.
+dibandingkan: 2026-11-04 12:00:00 .. 2026-11-05 00:00:00.
 
-## 2. Kecocokan sinyal candle demi candle (komponen 25%)
+## 2. Durasi forward test yang sebenarnya
 
-**100,00% identik** dari 2 candle, max selisih absolut 0.0
+Durasi dihitung dari log, bukan dari asumsi jadwal.
+
+| Item | Nilai |
+|---|---|
+| Candle pertama diproses | 2026-11-05 01:31 WIB |
+| Candle terakhir diproses | 2026-11-05 07:52 WIB |
+| Durasi aktual | **0,26 hari (6,3 jam) = 0,26% dari 10 hari** |
+| Candle terproses | 3/3 |
+| Candle seharusnya (4 jam) | ~2 |
+| Freeze dijadwalkan soal | 2026-11-04 12.00 WIB |
+| Mulai pertama | 13,5 jam setelah jadwal freeze 4 Nov 12.00 WIB |
+| Sisa sampai tenggat | 232,1 jam sebelum tenggat 14 Nov 23.59 WIB |
+
+**Dinyatakan terbuka:** bot tidak mulai memproses candle pada 4 Nov 12.00 WIB,
+karena pada hari itu masih dilakukan deploy, perbaikan bug koneksi API, dan uji
+idempotency. Pekerjaan itu wajib diselesaikan lebih dulu; bot yang berjalan
+dengan state tidak terbaca akan memproses candle berulang dan membuat seluruh
+log tidak sah. Konsekuensinya durasi forward test lebih pendek dari 10 hari
+penuh, dan laporan ini menyatakan durasi aktualnya, bukan mengklaim 10 hari.
+
+Periode yang dilaporkan tetap dihitung dengan definisi soal: uptime = candle
+terproses tepat waktu dibagi jumlah candle selama periode bot benar-benar
+berjalan. Pekerjaan setelah freeze hanya perbaikan bug dan penambahan alat
+pencatat; **aturan, parameter, dan universe tidak diubah** (bukti: `git log`
+antara `4aef4f1` dan commit terakhir hanya menyentuh validasi, log, dashboard,
+README, dan tools).
+
+## 3. Kecocokan sinyal candle demi candle (komponen 25%)
+
+**100,00% identik** dari 3 candle, max selisih absolut 0.0
 
 Metode: `tools/compare_forward.py` menjalankan ulang backtest pada jendela
 forward dengan fungsi (`logic.build_crypto_weights`) dan config yang **sama
@@ -29,7 +58,7 @@ persis** dengan bot, lalu membandingkan target weight per pair pada candle yang
 sama. Selisih 0 berarti keputusan bot dan backtest identik; setiap selisih
 berarti ada data yang berbeda (cache candle, waktu, atau universe).
 
-## 3. Porsi biaya
+## 4. Porsi biaya
 
 | Komponen | Nilai | Sumber |
 |---|---|---|
@@ -42,15 +71,15 @@ berarti ada data yang berbeda (cache candle, waktu, atau universe).
 
 Fee yang benar-benar dibayar di forward test: **Rp0** dari 0 order.
 
-## 4. Stabilitas bot dan uptime
+## 5. Stabilitas bot dan uptime
 
 | Item | Nilai |
 |---|---|
-| Panggilan diterima | 11 |
-| Diproses (executed) | 6 |
+| Panggilan diterima | 12 |
+| Diproses (executed) | 7 |
 | Duplikat ditolak (skip_dup) | 5 |
 | No entry (validasi gagal) | 0 |
-| Uptime candle | 1/1 (100,00%) |
+| Uptime candle | 3/3 (100,00%) |
 | Error API | 0 |
 | Kill switch dipakai | 0 |
 | Daily loss limit terpicu | 0 |
@@ -60,7 +89,7 @@ sebelum candle berikutnya ditutup. Panggilan terlambat tapi masih di dalam batas
 itu tidak mengurangi uptime. `skip_dup` tidak mengurangi uptime karena candle
 tersebut sudah diproses sebelumnya.
 
-## 5. Penyebab selisih (diisi analisis, bukan angka)
+## 6. Penyebab selisih (diisi analisis, bukan angka)
 
 Urutan pemeriksaan yang dipakai:
 
@@ -78,7 +107,7 @@ Urutan pemeriksaan yang dipakai:
 _Setiap penyebab di atas harus dikuantifikasi dari log sebelum ditulis di sini.
 Kalau tidak bisa dihitung dari log, jangan diklaim._
 
-## 6. Keterbatasan yang diakui
+## 7. Keterbatasan yang diakui
 
 - Forward test baru mencakup 0 candle
   (0.0 hari); CAGR dari periode ini tidak

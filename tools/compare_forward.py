@@ -92,12 +92,21 @@ def main():
         })
 
     ok = [p for p in per_candle if p.get("identik")]
+    # Candle yang belum tersedia di data historis lokal BUKAN ketidakcocokan
+    # sinyal; pisahkan supaya persentase tidak menyesatkan.
+    compared = [p for p in per_candle if not p.get("status")]
+    missing = [p for p in per_candle if p.get("status")]
     res = {
         "jendela_utc": [tz0.isoformat(), pd.Timestamp(candles[-1], unit="s",
                                                       tz="UTC").isoformat()],
-        "n_candle_dibandingkan": len(per_candle),
+        "n_candle_dibandingkan": len(compared),
+        "n_candle_data_belum_tersedia": len(missing),
+        "candle_data_belum_tersedia": [p["candle"] for p in missing],
         "n_identik": len(ok),
-        "match_pct": round(len(ok) / max(len(per_candle), 1), 4),
+        "match_pct": round(len(ok) / max(len(compared), 1), 4),
+        "catatan_match": ("match_pct dihitung dari candle yang datanya tersedia; "
+                          "candle yang belum ada di data lokal dilaporkan terpisah "
+                          "dan TIDAK dihitung sebagai ketidakcocokan sinyal"),
         "max_abs_diff_semua": round(max(diffs), 10) if diffs else None,
         "toleransi": TOL,
         "detail": per_candle,
@@ -132,8 +141,11 @@ def main():
               f"mdd {bt_win['mdd']:.4%} ({bt_win['n_candles']} candle)")
 
     print(f"jendela      : {res['jendela_utc'][0]} .. {res['jendela_utc'][1]}")
-    print(f"candle       : {len(per_candle)} dibandingkan, {len(ok)} identik "
+    print(f"candle       : {len(compared)} dibandingkan, {len(ok)} identik "
           f"({res['match_pct']:.1%})")
+    if missing:
+        print(f"data belum ada: {len(missing)} candle {res['candle_data_belum_tersedia']} "
+              f"(perlu refresh tools/fetch_4h.py, BUKAN beda sinyal)")
     print(f"max abs diff : {res['max_abs_diff_semua']}")
     for p in per_candle[:12]:
         if p.get("status"):

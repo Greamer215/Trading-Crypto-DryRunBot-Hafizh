@@ -85,6 +85,41 @@ def main():
     n_cmp = cmp_.get("n_candle_dibandingkan")
     max_diff = cmp_.get("max_abs_diff_semua")
 
+    # --- Durasi forward test AKTUAL dari log (bukan dari asumsi soal) --------
+    # Keputusan user: kumpul tepat waktu 14 Nov 23.59 dan nyatakan durasi nyata.
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    WIB = _tz(_td(hours=7))
+    DEADLINE = _dt(2026, 11, 14, 23, 59, tzinfo=WIB)
+    JDW_FREEZE = _dt(2026, 11, 4, 12, 0, tzinfo=WIB)
+
+    exec_calls = [c for c in calls if c.get("action") == "executed" and c.get("t")]
+    if exec_calls:
+        t_first = _dt.fromisoformat(exec_calls[0]["t"])
+        t_last = _dt.fromisoformat(exec_calls[-1]["t"])
+    else:
+        t_first = t_last = None
+
+    if t_first is not None and t_last is not None:
+        dur_jam = (t_last - t_first).total_seconds() / 3600
+        dur_hari = dur_jam / 24
+        sisa_jam = (DEADLINE - t_last).total_seconds() / 3600
+        telat_jam = (t_first - JDW_FREEZE).total_seconds() / 3600
+        n_candle_harap = int(dur_jam // 4) + 1
+        # konvensi Indonesia: koma untuk desimal
+        def _c(v, d=1):
+            return f"{v:.{d}f}".replace(".", ",")
+        dur_teks = f"{_c(dur_hari, 2)} hari ({_c(dur_jam)} jam)"
+        mulai_teks = t_first.strftime("%Y-%m-%d %H:%M WIB")
+        akhir_teks = t_last.strftime("%Y-%m-%d %H:%M WIB")
+        telat_teks = f"{_c(telat_jam)} jam setelah jadwal freeze 4 Nov 12.00 WIB"
+        sisa_teks = f"{_c(sisa_jam)} jam sebelum tenggat 14 Nov 23.59 WIB"
+    else:
+        dur_hari = dur_jam = sisa_jam = telat_jam = 0.0
+        n_candle_harap = 0
+        dur_teks = mulai_teks = akhir_teks = telat_teks = sisa_teks = "-"
+
+    pct_10hari = (dur_hari / 10 * 100) if dur_hari else 0.0
+
     md = f"""# Refleksi: Backtest vs Forward Test
 
 Dibuat otomatis {datetime.now().strftime('%Y-%m-%d %H:%M')} WIB dari
@@ -106,7 +141,36 @@ Selisih forward vs backtest pada jendela yang sama (forward dikurangi backtest):
 berarti forward lebih buruk; positif berarti lebih baik. Jendela forward yang
 dibandingkan: {fw.get('window', ['-', '-'])[0]} .. {fw.get('window', ['-', '-'])[1]}.
 
-## 2. Kecocokan sinyal candle demi candle (komponen 25%)
+## 2. Durasi forward test yang sebenarnya
+
+Durasi dihitung dari log, bukan dari asumsi jadwal.
+
+| Item | Nilai |
+|---|---|
+| Candle pertama diproses | {mulai_teks} |
+| Candle terakhir diproses | {akhir_teks} |
+| Durasi aktual | **{dur_teks} = {pct(dur_hari/100, 2)} dari 10 hari** |
+| Candle terproses | {hu.get('uptime_candle', '-')} |
+| Candle seharusnya (4 jam) | ~{n_candle_harap} |
+| Freeze dijadwalkan soal | 2026-11-04 12.00 WIB |
+| Mulai pertama | {telat_teks} |
+| Sisa sampai tenggat | {sisa_teks} |
+
+**Dinyatakan terbuka:** bot tidak mulai memproses candle pada 4 Nov 12.00 WIB,
+karena pada hari itu masih dilakukan deploy, perbaikan bug koneksi API, dan uji
+idempotency. Pekerjaan itu wajib diselesaikan lebih dulu; bot yang berjalan
+dengan state tidak terbaca akan memproses candle berulang dan membuat seluruh
+log tidak sah. Konsekuensinya durasi forward test lebih pendek dari 10 hari
+penuh, dan laporan ini menyatakan durasi aktualnya, bukan mengklaim 10 hari.
+
+Periode yang dilaporkan tetap dihitung dengan definisi soal: uptime = candle
+terproses tepat waktu dibagi jumlah candle selama periode bot benar-benar
+berjalan. Pekerjaan setelah freeze hanya perbaikan bug dan penambahan alat
+pencatat; **aturan, parameter, dan universe tidak diubah** (bukti: `git log`
+antara `4aef4f1` dan commit terakhir hanya menyentuh validasi, log, dashboard,
+README, dan tools).
+
+## 3. Kecocokan sinyal candle demi candle (komponen 25%)
 
 {("**" + pct(match_pct) + " identik** dari " + str(n_cmp) + " candle, max selisih absolut " + str(max_diff)) if match_pct is not None else "Belum ada candle yang bisa dibandingkan (log_sinyal kosong)."}
 
@@ -116,7 +180,7 @@ persis** dengan bot, lalu membandingkan target weight per pair pada candle yang
 sama. Selisih 0 berarti keputusan bot dan backtest identik; setiap selisih
 berarti ada data yang berbeda (cache candle, waktu, atau universe).
 
-## 3. Porsi biaya
+## 4. Porsi biaya
 
 | Komponen | Nilai | Sumber |
 |---|---|---|
@@ -129,7 +193,7 @@ berarti ada data yang berbeda (cache candle, waktu, atau universe).
 
 Fee yang benar-benar dibayar di forward test: **{rp(fee)}** dari {n_tr} order.
 
-## 4. Stabilitas bot dan uptime
+## 5. Stabilitas bot dan uptime
 
 | Item | Nilai |
 |---|---|
@@ -147,7 +211,7 @@ sebelum candle berikutnya ditutup. Panggilan terlambat tapi masih di dalam batas
 itu tidak mengurangi uptime. `skip_dup` tidak mengurangi uptime karena candle
 tersebut sudah diproses sebelumnya.
 
-## 5. Penyebab selisih (diisi analisis, bukan angka)
+## 6. Penyebab selisih (diisi analisis, bukan angka)
 
 Urutan pemeriksaan yang dipakai:
 
@@ -165,7 +229,7 @@ Urutan pemeriksaan yang dipakai:
 _Setiap penyebab di atas harus dikuantifikasi dari log sebelum ditulis di sini.
 Kalau tidak bisa dihitung dari log, jangan diklaim._
 
-## 6. Keterbatasan yang diakui
+## 7. Keterbatasan yang diakui
 
 - Forward test baru mencakup {((hu.get('uptime_expected') or 0) // 6)} candle
   ({(hu.get('uptime_expected') or 0) / 6:.1f} hari); CAGR dari periode ini tidak
