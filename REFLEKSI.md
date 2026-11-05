@@ -1,6 +1,6 @@
 # Refleksi: Backtest vs Forward Test
 
-Dibuat otomatis 2026-11-05 09:46 WIB dari
+Dibuat otomatis 2026-11-05 09:51 WIB dari
 `reports/` dan `logs/`. Angka di sini identik dengan dashboard dan
 `tools/hitung_ulang.py`; tidak ada yang ditulis manual.
 
