@@ -1,7 +1,7 @@
 {
  "window": [
   "2026-11-04 12:00:00",
-  "2026-11-05 00:00:00"
+  "2026-11-05 12:00:00"
  ],
  "cagr_window": 0.0,
  "mdd": 0.0,
@@ -9,7 +9,7 @@
  "n_trades": 0,
  "pf": NaN,
  "wr": 0.0,
- "n_candles": 4,
- "hari": 0.0,
+ "n_candles": 7,
+ "hari": 1.0,
  "catatan": "backtest pada jendela forward yang sama, fungsi & config identik"
 }

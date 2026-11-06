@@ -10,3 +10,6 @@
 {"t": "2026-11-05T02:41:47+07:00", "candle": 1793793600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T02:41:47+07:00"}
 {"t": "2026-11-05T03:17:55+07:00", "candle": 1793808000, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T03:17:55+07:00"}
 {"t": "2026-11-05T07:52:11+07:00", "candle": 1793822400, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T07:52:11+07:00"}
+{"t": "2026-11-05T19:13:57+07:00", "candle": 1793865600, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-05T19:13:57+07:00"}
+{"t": "2026-11-06T04:57:40+07:00", "candle": 1793894400, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-06T04:57:40+07:00"}
+{"t": "2026-11-06T13:31:10+07:00", "candle": 1793923200, "action": "executed", "n_orders": 0, "equity": 100000000.0, "uptime": true, "processed_at": "2026-11-06T13:31:10+07:00"}

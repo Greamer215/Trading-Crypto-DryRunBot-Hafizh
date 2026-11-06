@@ -1,12 +1,12 @@
 {
  "jendela_utc": [
   "2026-11-04T12:00:00+00:00",
-  "2026-11-04T20:00:00+00:00"
+  "2026-11-06T00:00:00+00:00"
  ],
- "n_candle_dibandingkan": 3,
+ "n_candle_dibandingkan": 6,
  "n_candle_data_belum_tersedia": 0,
  "candle_data_belum_tersedia": [],
- "n_identik": 3,
+ "n_identik": 6,
  "match_pct": 1.0,
  "catatan_match": "match_pct dihitung dari candle yang datanya tersedia; candle yang belum ada di data lokal dilaporkan terpisah dan TIDAK dihitung sebagai ketidakcocokan sinyal",
  "max_abs_diff_semua": 0.0,
@@ -39,6 +39,42 @@
   {
    "candle": 1793822400,
    "iso_utc": "2026-11-04T20:00:00+00:00",
+   "max_abs_diff": 0.0,
+   "identik": true,
+   "pair_bot": [],
+   "pair_backtest": [],
+   "hanya_bot": [],
+   "hanya_backtest": [],
+   "exposure_bot": 0.0,
+   "exposure_backtest": 0.0
+  },
+  {
+   "candle": 1793865600,
+   "iso_utc": "2026-11-05T08:00:00+00:00",
+   "max_abs_diff": 0.0,
+   "identik": true,
+   "pair_bot": [],
+   "pair_backtest": [],
+   "hanya_bot": [],
+   "hanya_backtest": [],
+   "exposure_bot": 0.0,
+   "exposure_backtest": 0.0
+  },
+  {
+   "candle": 1793894400,
+   "iso_utc": "2026-11-05T16:00:00+00:00",
+   "max_abs_diff": 0.0,
+   "identik": true,
+   "pair_bot": [],
+   "pair_backtest": [],
+   "hanya_bot": [],
+   "hanya_backtest": [],
+   "exposure_bot": 0.0,
+   "exposure_backtest": 0.0
+  },
+  {
+   "candle": 1793923200,
+   "iso_utc": "2026-11-06T00:00:00+00:00",
    "max_abs_diff": 0.0,
    "identik": true,
    "pair_bot": [],

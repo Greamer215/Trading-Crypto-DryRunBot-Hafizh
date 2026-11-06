@@ -73,13 +73,33 @@ def main():
         out["forward_return_total"] = round(e1 / e0 - 1, 6)
         s = eq["equity"]
         out["forward_mdd"] = round(float((s / s.cummax() - 1).min()), 6)
-        # uptime: panggilan executed sebelum candle berikutnya ditutup (4h)
+        # UPTIME (definisi soal): candle terproses tepat waktu / jumlah candle
+        # selama forward test. Dasar = rentang dari candle PERTAMA yang diproses
+        # sampai candle TERTUTUP TERAKHIR yang sudah lewat (bukan sekadar candle
+        # terakhir yang sempat diproses) -> candle yang terlewat ikut dihitung,
+        # sedangkan candle yang belum tiba waktunya tidak dihukum.
+        import time as _time
         executed = [c for c in calls if c.get("action") == "executed"]
-        candles = sorted({c["candle"] for c in executed if "candle" in c})
-        span = candles[-1] - candles[0] + 14400 if candles else 0
-        n_expected = max(span // 14400, 1)
-        out["uptime_candle"] = f"{len(candles)}/{n_expected}"
-        out["uptime_pct"] = round(len(candles) / n_expected, 4)
+        done = sorted({c["candle"] for c in executed if "candle" in c})
+        if done:
+            c_first = done[0]
+            now = int(_time.time())
+            last_closed = (now // 14400) * 14400 - 14400
+            c_last = max(last_closed, done[-1])
+            n_expected = (c_last - c_first) // 14400 + 1
+            n_done = len(done)
+            missed = [c_first + i * 14400 for i in range(n_expected)
+                      if (c_first + i * 14400) not in set(done)]
+            out["uptime_candle"] = f"{n_done}/{n_expected}"
+            out["uptime_pct"] = round(n_done / max(n_expected, 1), 4)
+            out["candle_terlewat"] = len(missed)
+            out["candle_terlewat_list"] = missed[:40]
+            out["candle_pertama"] = c_first
+            out["candle_tertutup_terakhir"] = c_last
+        else:
+            out["uptime_candle"] = "0/0"
+            out["uptime_pct"] = 0.0
+            out["candle_terlewat"] = 0
     # median spread dari snapshot book
     if books:
         sp = []

@@ -1,0 +1,1 @@
+sumber=https://indodax.com/tradingview/history_v2 tf=240 diakses=2026-11-06

@@ -202,14 +202,25 @@ Fee yang benar-benar dibayar di forward test: **{rp(fee)}** dari {n_tr} order.
 | Duplikat ditolak (skip_dup) | {n_skip} |
 | No entry (validasi gagal) | {n_no} |
 | Uptime candle | {up_done} ({pct(up_pct)}) |
+| Candle terlewat | {hu.get('candle_terlewat', 0)} |
 | Error API | {hu.get('n_error_api', 0)} |
 | Kill switch dipakai | {hu.get('kill_switch_events', 0)} |
 | Daily loss limit terpicu | {hu.get('daily_loss_limit_events', 0)} |
 
 Uptime memakai definisi soal: panggilan dihitung terlaksana bila candle diproses
-sebelum candle berikutnya ditutup. Panggilan terlambat tapi masih di dalam batas
-itu tidak mengurangi uptime. `skip_dup` tidak mengurangi uptime karena candle
-tersebut sudah diproses sebelumnya.
+sebelum candle berikutnya ditutup. Rentang dihitung dari candle pertama yang
+diproses sampai candle tertutup terakhir yang sudah lewat, sehingga candle yang
+terlewat ikut dihitung dan candle yang belum tiba waktunya tidak dihukum.
+`skip_dup` tidak mengurangi uptime karena candle tersebut sudah diproses.
+
+**Penyebab uptime turun, terukur dari log Actions:** jadwal `7 */4 * * *`
+seharusnya memberi 12 kesempatan dalam dua hari pertama, tetapi GitHub Actions
+hanya menjalankan 4 di antaranya. Empat jadwal tidak pernah muncul sama sekali
+(bukan gagal, memang tidak dijalankan) dan yang berjalan pun terlambat 6-143
+menit. Perbaikannya: jadwal diubah ke tiap jam (`7 * * * *`) sehingga ada 4x
+lebih banyak kesempatan menangkap setiap candle, dan panggilan ekstra ditolak
+oleh mekanisme idempotency (`skip_dup`, tanpa order). Perubahan ini menyentuh
+penjadwalan, bukan aturan, parameter, atau universe.
 
 ## 6. Penyebab selisih (diisi analisis, bukan angka)
 

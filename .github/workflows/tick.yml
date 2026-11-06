@@ -1,10 +1,16 @@
-name: tick setiap 4 jam
+name: tick tiap jam (idempoten)
 
-# Soal p.3: jadwal di menit selain 0 (menit ke-7) karena menit 0 sering terlambat.
-# Timeframe 4h -> 6 panggilan/hari. Uptime dihitung dari log bot, bukan dari sini.
+# KENAPA TIAP JAM, BUKAN TIAP 4 JAM:
+# timeframe strategi 4 jam, tapi GitHub Actions sering MENJATUHKAN jadwal (bukan
+# gagal, tapi tidak dijalankan sama sekali) dan sering terlambat 1-2 jam.
+# Catatan nyata 5-6 Nov 2026: dari 12 jadwal 4-jaman hanya 4 yang berjalan,
+# uptime bot jatuh ke 6/10 = 60%. Solusi: panggil tiap jam, 4x lebih banyak
+# kesempatan menangkap tiap candle. Bot sudah IDEMPOTEN (state.processed),
+# panggilan ekstra -> skip_dup tanpa order. Perbaikan PENJADWALAN, bukan
+# perubahan aturan/parameter/universe. Uptime tetap dihitung dari log bot.
 on:
   schedule:
-    - cron: '7 */4 * * *'
+    - cron: '7 * * * *'
   workflow_dispatch: {}
 
 concurrency:
@@ -16,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Panggil /api/tick
+      - name: Panggil /api/tick (retry 3x)
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           VERCEL_URL: ${{ secrets.VERCEL_URL }}
@@ -26,16 +32,18 @@ jobs:
             echo "SEKRET BELUM DISET: CRON_SECRET / VERCEL_URL" >&2
             exit 1
           fi
-          SCHED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "jadwal_utc=$SCHED"
-          BODY=$(mktemp)
-          CODE=$(curl -sS -o "$BODY" -w "%{http_code}" \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            --max-time 180 \
-            "${VERCEL_URL%/}/api/tick" || echo "000")
-          echo "http=$CODE"
-          echo "respons=$(cat "$BODY")"
-          if [ "$CODE" != "200" ]; then
-            echo "panggilan gagal (http $CODE)" >&2
-            exit 1
-          fi
+          echo "jadwal_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          for attempt in 1 2 3; do
+            BODY=$(mktemp)
+            CODE=$(curl -sS -o "$BODY" -w "%{http_code}" \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              --max-time 180 \
+              "${VERCEL_URL%/}/api/tick" || echo "000")
+            echo "attempt=$attempt http=$CODE respons=$(cat "$BODY")"
+            if [ "$CODE" = "200" ]; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "panggilan gagal setelah 3 percobaan" >&2
+          exit 1
