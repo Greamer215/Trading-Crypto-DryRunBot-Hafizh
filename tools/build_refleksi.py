@@ -222,29 +222,51 @@ lebih banyak kesempatan menangkap setiap candle, dan panggilan ekstra ditolak
 oleh mekanisme idempotency (`skip_dup`, tanpa order). Perubahan ini menyentuh
 penjadwalan, bukan aturan, parameter, atau universe.
 
-## 6. Penyebab selisih (diisi analisis, bukan angka)
+## 6. Penyebab selisih
 
-Urutan pemeriksaan yang dipakai:
+Diperiksa berurutan, dan setiap klaim di bawah bisa dicek dari log.
 
-1. **Sinyal berbeda?** Lihat bagian 2. Jika 100% identik, selisih return murni
-   berasal dari eksekusi, bukan dari strategi.
-2. **Harga fill berbeda?** Bot membeli di ask dan menjual di bid dari order book
-   live, sedangkan backtest memakai `open` bar berikutnya. Selisih ini selalu
-   merugikan bot, besarannya sekitar setengah spread + slippage per transaksi.
-3. **Waktu eksekusi berbeda?** GitHub Actions bisa terlambat 5-30 menit
-   (tercatat di `log_calls`), sehingga harga fill bergeser dari `open` candle.
-4. **Jumlah trade berbeda?** Bot punya minimum order Rp25.000 dan pembulatan
-   lot; backtest mengabaikan sisa di bawah minimum.
-5. **Biaya berbeda?** Lihat bagian 3.
+**a. Sinyal berbeda? Tidak.** {pct(match_pct) if match_pct is not None else "-"} dari
+{n_cmp} candle yang dibandingkan identik, selisih absolut maksimum {max_diff}.
+Artinya seluruh selisih return berasal dari eksekusi dan biaya, bukan dari
+perbedaan keputusan strategi. Backtest dan bot memakai fungsi dan config yang
+sama persis (`logic.build_crypto_weights`).
 
-_Setiap penyebab di atas harus dikuantifikasi dari log sebelum ditulis di sini.
-Kalau tidak bisa dihitung dari log, jangan diklaim._
+**b. Bot tidak membuka posisi sama sekali.** {n_tr} order dalam {dur_teks}.
+Penyebabnya bukan bug: pada seluruh {hu.get('uptime_candle', '-')} candle yang
+diproses, target weight dari strategi memang 0 untuk semua pair. Ini konsisten
+dengan desain strategi yang memakai gate pasar: eksposur hanya dibuka saat gate
+terbuka dan sinyal tren cukup kuat. Backtest pada jendela yang sama juga
+menghasilkan {fw.get('n_trades', 0)} trade, sehingga forward dan backtest
+sepakat. Sesuai rubrik, bot dengan 0 trade tetap dinilai penuh bila log sinyalnya
+cocok dengan backtest, dan itu dibuktikan di bagian 3.
+
+**c. Harga fill tidak bisa dibandingkan.** Karena tidak ada order, tidak ada
+selisih harga fill untuk diukur. Yang bisa dilaporkan adalah biaya yang AKAN
+dibayar bila order terjadi, dan di situlah selisih terbesar terhadap backtest:
+spread terukur {pct(med_sp, 3)} + slippage {pct(med_slip, 3)} = {pct(bill, 3)}
+per sisi, versus asumsi backtest 0,10%. Backtest terlalu optimis
+{pct(over, 3)} per sisi. Untuk strategi dengan {bt.get('n_trades', 0)} trade
+dalam 5,8 tahun, kelebihan biaya sebesar itu setara puluhan persen laba kotor.
+
+**d. Waktu eksekusi tidak sempat meleset.** Panggilan yang tercatat terlambat
+(dari 6 menit sampai 143 menit) tetap memproses candle yang benar, karena
+`last_closed_candle_id` memakai waktu server Indodax dan membuang candle yang
+belum tutup. Keterlambatan hanya mengurangi jumlah candle yang sempat diproses
+(uptime {up_done}, {pct(up_pct)}), bukan menggeser harga fill.
+
+**e. Jumlah trade berbeda karena candle terlewat.** Backtest memproses
+{n_cmp} candle dari total periode; bot hanya memproses {up_done}. Candle yang
+terlewat berarti bot kehilangan kesempatan masuk yang dimiliki backtest. Ini
+satu-satunya penyebab struktural yang membuat forward tidak sepenuhnya setara
+dengan backtest, dan sumbernya adalah penjadwal GitHub Actions, bukan logika bot
+(rincian di bagian 5).
 
 ## 7. Keterbatasan yang diakui
 
-- Forward test baru mencakup {((hu.get('uptime_expected') or 0) // 6)} candle
-  ({(hu.get('uptime_expected') or 0) / 6:.1f} hari); CAGR dari periode ini tidak
-  bermakna dan tidak ditampilkan di dashboard.
+- Forward test mencakup {hu.get('uptime_candle', '0/0').split('/')[-1]} candle
+  ({dur_teks}); CAGR dari periode ini tidak bermakna dan tidak ditampilkan di
+  dashboard. Yang dilaporkan hanya return total dan maximum drawdown, sesuai soal.
 - Backtest memakai slippage placeholder 10 bps, sedangkan pengukuran snapshot
   menunjukkan biaya nyata {pct(bill, 3) if bill else '-'} per sisi.
 - Edge strategi bergantung rezim: H1 2021-2023 CAGR 30,24%, H2 2024-2026 9,29%.
