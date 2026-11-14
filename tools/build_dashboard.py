@@ -49,8 +49,17 @@ def compute():
 
     executed = [c for c in calls if c.get("action") == "executed"]
     candles = sorted({c["candle"] for c in executed if "candle" in c})
-    span = (candles[-1] - candles[0] + 14400) if candles else 0
-    n_expected = max(span // 14400, 1) if candles else 0
+    # Uptime HARUS identik dengan tools/hitung_ulang.py (rubrik: angka dashboard
+    # wajib bisa dihitung ulang dari log). Batas = candle terakhir yang SUDAH
+    # TUTUP, bukan candle terakhir yang sempat diproses, supaya candle terlewat
+    # ikut dihitung.
+    if candles:
+        import time as _t
+        last_closed = (int(_t.time()) // 14400) * 14400 - 14400
+        c_last = max(last_closed, candles[-1])
+        n_expected = (c_last - candles[0]) // 14400 + 1
+    else:
+        n_expected = 0
 
     eq = [e["equity"] for e in equity if "equity" in e]
     e0 = eq[0] if eq else CAPITAL

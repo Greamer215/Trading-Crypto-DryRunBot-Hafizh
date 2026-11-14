@@ -23,11 +23,127 @@
   "1793923200": {
    "action": "executed",
    "n_orders": 0
+  },
+  "1793952000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1793980800": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1793995200": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794024000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794038400": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794067200": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794081600": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794096000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794124800": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794139200": {
+   "action": "no_entry",
+   "why": "DOTIDR: spread 2.44% > 2%"
+  },
+  "1794153600": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794182400": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794225600": {
+   "action": "no_entry",
+   "why": "DOTIDR: spread 2.73% > 2%"
+  },
+  "1794254400": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794283200": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794312000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794326400": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794340800": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794369600": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794398400": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794427200": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794456000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794484800": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794513600": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794528000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794571200": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794585600": {
+   "action": "no_entry",
+   "why": "DOTIDR: spread 4.16% > 2%"
+  },
+  "1794600000": {
+   "action": "executed",
+   "n_orders": 0
+  },
+  "1794628800": {
+   "action": "no_entry",
+   "why": "DOTIDR: spread 2.40% > 2%"
   }
  },
  "cash": 100000000.0,
  "positions": {},
- "equity_day": "2026-11-06",
+ "equity_day": "2026-11-14",
  "equity_0d": 100000000.0,
  "kill": false,
  "halt": null

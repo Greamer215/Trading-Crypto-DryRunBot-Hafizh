@@ -1,6 +1,6 @@
 # Refleksi: Backtest vs Forward Test
 
-Dibuat otomatis 2026-11-06 14:33 WIB dari
+Dibuat otomatis 2026-11-14 22:37 WIB dari
 `reports/` dan `logs/`. Angka di sini identik dengan dashboard dan
 `tools/hitung_ulang.py`; tidak ada yang ditulis manual.
 
@@ -17,7 +17,7 @@ Dibuat otomatis 2026-11-06 14:33 WIB dari
 Selisih forward vs backtest pada jendela yang sama (forward dikurangi backtest):
 **return +0,00%**, **drawdown +0,00%**. Tanda negatif
 berarti forward lebih buruk; positif berarti lebih baik. Jendela forward yang
-dibandingkan: 2026-11-04 12:00:00 .. 2026-11-05 12:00:00.
+dibandingkan: 2026-11-04 12:00:00 .. 2026-11-10 08:00:00.
 
 ## 2. Durasi forward test yang sebenarnya
 
@@ -26,13 +26,13 @@ Durasi dihitung dari log, bukan dari asumsi jadwal.
 | Item | Nilai |
 |---|---|
 | Candle pertama diproses | 2026-11-05 01:31 WIB |
-| Candle terakhir diproses | 2026-11-06 13:31 WIB |
-| Durasi aktual | **1,50 hari (36,0 jam) = 1,50% dari 10 hari** |
-| Candle terproses | 6/10 |
-| Candle seharusnya (4 jam) | ~9 |
+| Candle terakhir diproses | 2026-11-14 10:05 WIB |
+| Durasi aktual | **9,36 hari (224,6 jam) = 9,36% dari 10 hari** |
+| Candle terproses | 31/60 |
+| Candle seharusnya (4 jam) | ~57 |
 | Freeze dijadwalkan soal | 2026-11-04 12.00 WIB |
 | Mulai pertama | 13,5 jam setelah jadwal freeze 4 Nov 12.00 WIB |
-| Sisa sampai tenggat | 202,5 jam sebelum tenggat 14 Nov 23.59 WIB |
+| Sisa sampai tenggat | 13,9 jam sebelum tenggat 14 Nov 23.59 WIB |
 
 **Dinyatakan terbuka:** bot tidak mulai memproses candle pada 4 Nov 12.00 WIB,
 karena pada hari itu masih dilakukan deploy, perbaikan bug koneksi API, dan uji
@@ -50,7 +50,7 @@ README, dan tools).
 
 ## 3. Kecocokan sinyal candle demi candle (komponen 25%)
 
-**100,00% identik** dari 6 candle, max selisih absolut 0.0
+**100,00% identik** dari 28 candle, max selisih absolut 0.0
 
 Metode: `tools/compare_forward.py` menjalankan ulang backtest pada jendela
 forward dengan fungsi (`logic.build_crypto_weights`) dan config yang **sama
@@ -75,12 +75,12 @@ Fee yang benar-benar dibayar di forward test: **Rp0** dari 0 order.
 
 | Item | Nilai |
 |---|---|
-| Panggilan diterima | 15 |
-| Diproses (executed) | 10 |
+| Panggilan diterima | 44 |
+| Diproses (executed) | 35 |
 | Duplikat ditolak (skip_dup) | 5 |
-| No entry (validasi gagal) | 0 |
-| Uptime candle | 6/10 (60,00%) |
-| Candle terlewat | 4 |
+| No entry (validasi gagal) | 4 |
+| Uptime candle | 31/60 (51,67%) |
+| Candle terlewat | 29 |
 | Error API | 0 |
 | Kill switch dipakai | 0 |
 | Daily loss limit terpicu | 0 |
